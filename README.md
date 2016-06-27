@@ -25,7 +25,7 @@
 - Need to declare org.springframework.web.context.ContextLoaderListener or only DispatcherServlet's context will be created
 - If contextConfigLocation is not declared, it defaults to WEB-INF\applicationContext.xml
 - ContextLoaderListener - Bootstrap listener to start up and shut down Spring's root WebApplicationContext. Optional.
-```
+```xml
 <context-param>
   <param-name>contextConfigLocation</param-name>
   <!--Defaults to WEB-INF\applicationContext.xml if not specified-->
@@ -37,7 +37,7 @@
 ```
 **Child webapp context**  
 If contextConfigLocation is not declared, it defaults to WEB-INF\dispatcher-servlet.xml
-```
+```xml
 <servlet>
   <servlet-name>dispatcher</servlet-name>
   <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -54,7 +54,7 @@ web.xml + WEB-INF/dispatcher-servlet.xml (for xml, annotation based alternative 
 
 **web.xml**  
 Declare DispatcherServlet as servlet and provide servlet-mapping
-```
+```xml
 <servlet>
   <servlet-name>dispatcher</servlet-name>
   <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -67,7 +67,9 @@ Declare DispatcherServlet as servlet and provide servlet-mapping
 ```
 **WEB-INF/dispatcher-servlet.xml**  
 In configuration file for Web Application Context declare a controller to serve requests (assuming controller returns directly content using @ResponseBody and no view resolving is required)  
-```<bean id="myController" class="com.example.MyController" />```
+```xml
+<bean id="myController" class="com.example.MyController" />
+```
 
 ####Configuration without web.xml 
 - From Servlet 3.x web.xml is optional
