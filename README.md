@@ -274,7 +274,7 @@ public void addInterceptors(InterceptorRegistry registry) {
   registry.addInterceptor(new FooInterceptor());
 }
 ```  
-**XML Configuration using <mvc:interceptors>**  
+**XML Configuration using `<mvc:interceptors>`**  
 ```xml
 <mvc:interceptors>
   <bean class="com.example.FooInterceptor"/>
