@@ -110,7 +110,6 @@ In configuration file for Web Application Context declare a controller to serve 
   
 #MVC Components
 ###Model
-
 - Is always created and passed to the view
 - If a mapped controller method has Model as a method parameter, then a model instance is automatically injected by Spring to that method
 - Any attributes set on injected model are preserved and passed to the View
@@ -124,7 +123,6 @@ public String personDetail(Model model) {
 - Can be also added without attribute name `model.addAttribute(person);` Attribute name is then set depending on the added type name. E.g. Person type results in "person" name.
 
 ###View
-
 - Template for rendering output to client based on Model data
 - Display: JSP, Thymeleaf, Freemarker, Velocity,...
 - Content: JSON, XML, PDF,...
@@ -141,7 +139,6 @@ public interface View {
     - protected void buildPdfDocument(Map<String, Object> model, Document document, PdfWriter pdfWriter, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws Exception
 
 ###Controller
-
 - POJO annotated @Controller
 - Has methods which corresponds to specific urls, incl. variants for different HTTP methods (GET, POST), parameters provided etc.
 - Methods are mapped to URLs usually using annotations @RequestMapping
@@ -154,3 +151,59 @@ public interface View {
 - When specified as method parameters, certain objects can be automatically injected by spring to be used inside the controller methods
     - Model, HttpServletRequest, HttpServletResponse, Locale, Principal, HttpSession, HttpEntity<?>, TimeZone,...
 - Can be well unit tested (is POJO) without container
+
+----------------
+
+#Mapping Controllers
+###Handler Resolving process
+Controller is a specific type of Handler
+- Client sends a request to a specific url
+- Dispatcher servlet consults handler mappings, specific handler is returned based on the request - `getHandler(request)`
+- Handler is invoked through HandlerAdapter - `handle(request,response,handler)`
+
+
+###Handler Mapping
+- RequestMappingHandlerMapping - enabled by default - Takes into account @RequestMapping on class and method level of @Controllers
+- ControllerClassNameHandlerMapping - @RequestMapping on method level, but not on class level, class level is mapped from controller name
+    - (PersonController -> /person/*) + @RequestMapping("edit") -> /person/edit
+    - If request mapping not specified on method level, method name is taken instead -  edit() -> /edit
+- SimpleUrlHandlerMapping
+    - Mapping is defined declaratively
+```xml
+<bean class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping" >
+  <property name= "mappings" >
+    <value>
+      /home=homeController
+      /persons/**=personsController
+    </value>
+  </property>
+</bean>
+```
+- Can have multiple chained HandlerMappings with specified order (same as view resolvers)
+    - The first match wins
+    - return of null means chain continues
+- `<mvc:interceptors>` or `WebMvcConfigurer.addInterceptors()` adds interceptors for all mappings. To add interceptor to a specific mapping:
+```xml
+<bean class="org.springframework.web.servlet.mvc.support.ControllerClassNameHandlerMapping">
+  <property name="interceptors" >
+    <list>
+      <bean class="com.example.FooInterceptor"/>
+      <bean class="com.example.BarInterceptor"/>
+    </list>
+  </property>
+</bean>
+```
+- Spring boot enables by default RequestMappingHandlerMapping, BeanNameUrlHandlerMapping, SimpleUrlHandlerMapping
+
+#HandlerAdapter
+- Adapter for invoking specific Handlers (one type of handler is @Controller)
+- Has method handle(request,response,controller)
+- Shields Dispatcher Servlet from specific types of Handlers
+- WebflowHandlerAdapter, HttpRequestHandlerAdapter (remoting, resource handling,...)
+- Spring Boot enables by default RequestMappingHandlerAdapter, HttpRequestHandlerAdapter, SimpleControllerHandlerAdapter
+- RequestMappingHandlerAdapter
+    - Adapts calls to @RequestMapping methods
+    - Injects method params such as Model, HttpServletRequest, @PathVariables etc.
+    - Interprets method return value - logical view name/ModelAndView/@ResponseBody/...
+    - Supports Optional<> - for @RequestParam, @RequestHeader ("Pragma"),...
+    - Enabled by default
