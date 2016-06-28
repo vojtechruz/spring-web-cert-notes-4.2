@@ -165,8 +165,8 @@ Controller is a specific type of Handler.
 ###Handler Mapping
 - RequestMappingHandlerMapping - enabled by default - Takes into account @RequestMapping on class and method level of @Controllers
 - ControllerClassNameHandlerMapping - @RequestMapping on method level, but not on class level, class level is mapped from controller name
-    - (PersonController -> /person/*) + @RequestMapping("edit") -> /person/edit
-    - If request mapping not specified on method level, method name is taken instead -  edit() -> /edit
+    - (PersonController → /person/*) + @RequestMapping("edit") → /person/edit
+    - If request mapping not specified on method level, method name is taken instead -  edit() → /edit
 - SimpleUrlHandlerMapping
     - Mapping is defined declaratively
 ```xml
@@ -229,7 +229,7 @@ Controller is a specific type of Handler.
 - public String personDetail(@RequestParam("id") long id)
 - Can be set as optional either by @RequestParam(value="id", required=false ) or by declaring type as Optional<?>
 - If parameter name not declared, defaults to method's parameter name
-    - @RequestParam long id => id param name (Java8+ or Debug Symbols enabled)
+    - @RequestParam long id → id param name (Java8+ or Debug Symbols enabled)
 
 ###@PathVariable
 - Access to path segments (before ? in url)
@@ -237,7 +237,7 @@ Controller is a specific type of Handler.
 - eg. can extract person id=123 from /persons/123
 ```java
 @RequestMapping("/persons/{id}" )
-public String personDetail ( @PathVariable ("id" ) long id) {...}
+public String personDetail (@PathVariable ("id" ) long id) {...}
 ```
 - Can use regex
 - PathVariable and RequestParam can be formatted using @NumberFormat or @DataTimeFormat annotations
@@ -308,9 +308,9 @@ public void addInterceptors(InterceptorRegistry registry) {
 ###View Resolver Chain
 - Beans of ViewResolver are discovered by Type and added to View Resolver Chain
 - When a controller returns a logical view name, Dispatcher Servlet queries ViewResolvers in the chain depending on their Order. When first resolver returns View, chain does not continue
-- Some resolvers can be only last (JSTL, JSON, XSLT,...), other anywhere in the chain (Tiles, Velocity, Freemarker,...) - they return null if view not resolved -> chain continues
+- Some resolvers can be only last (JSTL, JSON, XSLT,...), other anywhere in the chain (Tiles, Velocity, Freemarker,...) - they return null if view not resolved → chain continues
 - Order can be set
-    - In Java
+**In Java Config**
 ```java
 @Bean
 public BeanNameViewResolver beanNameViewResolver() {
@@ -318,14 +318,14 @@ public BeanNameViewResolver beanNameViewResolver() {
   resolver.setOrder(1);
   return resolver;
 }
-```
-    -  In Xml
+```  
+**In Xml**
 ```xml
 <bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
   <property name="order" value="1" />
 </bean>
-```
-    -  Or in xml using mvc namespace - order is determined by order of resolver elements in the tag
+```  
+**xml using mvc namespace - order is determined by order of resolver elements in the tag**
 ```xml
 <mvc:view-resolvers>
   <!--Order 0, BeanNameViewResolver-->
@@ -348,8 +348,8 @@ public BeanNameViewResolver beanNameViewResolver() {
 ###Content Negotiation
 - One resource can be rendered as different type to the client depending on the request
 - Can be based on http header, file extension or http request parameter
-- Can be achieved by having multiple controller methods for each content type one, not recommended
-- Can be achieved by having one controller method with branching logic depending or request details, not recommended
+- Can be achieved by having multiple controller methods, one for each content type - not recommended
+- Can be achieved by having one controller method with branching logic depending or request details - not recommended
 
 ###ContentNegotiatingViewResolver
 
@@ -366,13 +366,13 @@ public BeanNameViewResolver beanNameViewResolver() {
     - useNotAcceptableStatusCode - if true, will return HTTP 406 when view not resolved, otherwise the view resolver chain will just continue
 
 ###ContentNegotiationManager
-
 - The ContentNegotiatingViewResolver handles delegation to other view resolvers and checking whether they are able to provide desired content type. ContentNegotiationManager decides what the desired type is based on the client’s request.
 - @EnableWebMvc or <mvc:annotation-driven /> creates default ContentNegotiationManager
-- Content type resolution process order
+- Accept header usually not used as browsers by default always send text/html
+- If match is not found, default content the can be specified using defaultContentType property
+- Mapping of format (html) to mime-type (text/html) is done either by JAF - Java Activation Framework (by default; can be disabled by ueJaf=false) or by specifying a map of format→mime-type pairs using mediaTypes
+
+**Content type resolution process order**
    1. Check if there is an extension in url (.json); favorPathExtension=true
    2. Check if there is url parameter format (?format=json); favorParameter=true; "format" parameter name can be changed using parameterName property
    3. Check if there is a HTTP Accept header (Accept: application/json); ignoreAcceptHeader=false
-- Accept header usually not used as browsers by default always send text/html
-- If match is not found, default content the can be specified using defaultContentType property
-- Mapping of format (html) to mime-type (text/html) is done either by JAF - Java Activation Framework (by default; can be disabled by ueJaf=false) or by specifying a map of format->mime-type pairs using mediaTypes
