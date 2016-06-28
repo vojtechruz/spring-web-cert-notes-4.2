@@ -156,11 +156,11 @@ public interface View {
 
 #Mapping Controllers
 ###Handler Resolving process
-Controller is a specific type of Handler
-- Client sends a request to a specific url
-- Dispatcher servlet consults handler mappings, specific handler is returned based on the request - `getHandler(request)`
-- Handler is invoked through HandlerAdapter - `handle(request,response,handler)`
+1. Client sends a request to a specific url
+2. Dispatcher servlet consults handler mappings, specific handler is returned based on the request - `getHandler(request)`
+3. Handler is invoked through HandlerAdapter - `handle(request,response,handler)`  
 
+Controller is a specific type of Handler.
 
 ###Handler Mapping
 - RequestMappingHandlerMapping - enabled by default - Takes into account @RequestMapping on class and method level of @Controllers
@@ -195,7 +195,7 @@ Controller is a specific type of Handler
 ```
 - Spring boot enables by default RequestMappingHandlerMapping, BeanNameUrlHandlerMapping, SimpleUrlHandlerMapping
 
-#HandlerAdapter
+###HandlerAdapter
 - Adapter for invoking specific Handlers (one type of handler is @Controller)
 - Has method handle(request,response,controller)
 - Shields Dispatcher Servlet from specific types of Handlers
@@ -207,3 +207,81 @@ Controller is a specific type of Handler
     - Interprets method return value - logical view name/ModelAndView/@ResponseBody/...
     - Supports Optional<> - for @RequestParam, @RequestHeader ("Pragma"),...
     - Enabled by default
+    
+   
+----------------
+
+#Controllers - Accessing Request Data
+###@RequestMapping
+- Can be on class level or method level of a Controller
+- `@RequestMapping("/foo" )` - maps to /foo url, applies to all HTTP methods
+- `@RequestMapping(value="/foo" ,method=RequestMethod.POST)` - Maps to /foo url, but only HTTP POST method
+- `@RequestMapping(value="/foo", params={"bar"})` - Maps to /foo url but only when foo and bar params are included with any value (/foo?bar=something). Can provide multiple parameters.
+- `@RequestMapping(value="/foo" , params={ "bar=baz"})` - maps to /foo url but only when bar parameter is provided with a value of 'baz'.
+- Methods without requestMapping are ignored even when @RequestMapping is on a class level
+- @RequestMapping("/foo") on class level and @RequestMapping("/bar") on a method level results in mapping to url /foo/bar
+
+###@RequestParam
+- Access to url params (/url?paramName=paramValue)
+- Injected to controller methods as method parameters
+- Does type conversion (also supports primitives)
+- Can result in exception if not present or if type mismatch
+- public String personDetail(@RequestParam("id") long id)
+- Can be set as optional either by @RequestParam(value="id", required=false ) or by declaring type as Optional<?>
+- If parameter name not declared, defaults to method's parameter name
+    - @RequestParam long id => id param name (Java8+ or Debug Symbols enabled)
+
+###@PathVariable
+- Access to path segments (before ? in url)
+- Used in REST
+- eg. can extract person id=123 from /persons/123
+```java
+@RequestMapping("/persons/{id}" )
+public String personDetail ( @PathVariable ("id" ) long id) {...}
+```
+- Can use regex
+- PathVariable and RequestParam can be formatted using @NumberFormat or @DataTimeFormat annotations
+- If name not specified, it defaults to method param name
+```java
+@RequestMapping("/persons/{id}")
+public String personDetail (@PathVariable long id) {...}
+```
+
+###Accessing request data
+- If HttpServletRequest declared as controller method parameter, it is automatically injected by spring
+    - Harder to mock and test, but spring provides MockHttpServletRequest
+- Following annotations can be used on method parameters
+    - Request data through SPEL and @Value annotation: @Value ("#{request.method}"), @Value ("#{request.requestURI}")
+    - HTTP Headers: @RequestHeader ("user-agent")
+    - Cookies: @CookieValue ("jsessionid")
+
+###Intercepting Controller methods using HandlerInterceptor
+- Good when handling cross-cutting concerns (security, logging,...)
+- Interface HandlerInterceptor, which can define logic to be performed before controller execution, after it and after rendering output from the View
+```java
+boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception;`
+void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception;
+void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception;
+```
+- For convenience, there is HandlerInterceptorAdapter, which implements the interface with all methods empty
+- If preHandle returns false, controller is not invoked
+- Multiple interceptors allowed (interceptor chain)
+
+**Java Configuration - in WebMvcConfigurerAdapter**  
+```java
+@Override
+public void addInterceptors(InterceptorRegistry registry) {
+  registry.addInterceptor(new FooInterceptor());
+}
+```  
+**XML Configuration using <mvc:interceptors>**  
+```xml
+<mvc:interceptors>
+  <bean class="com.example.FooInterceptor"/>
+  <mvc:interceptor>
+    <mvc:mapping path="/bar/*"/>
+    <mvc:exclude-mapping path="/bar/exclude"/>
+    <bean class="com.example.barInterceptor"/>
+  </mvc:interceptor>
+</mvc:interceptors>
+```
