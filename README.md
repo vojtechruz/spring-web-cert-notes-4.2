@@ -1,11 +1,11 @@
-##Basic MVC Configuration
-####Dispatcher Servlet
+#Basic MVC Configuration
+###Dispatcher Servlet
 - Implementation of Front Controller Pattern (see Patterns of Enterprise Application Architecture)
 - Single point of entry - handle all incomming requests
 - Orchestrates request handling by delegating requests to additional components (@Controllers, Views, View Resolvers, handler mappers, ...)
 - Can map directly to /, but then exception for handling static resources needs to be configured
 
-####Basic Request handling process
+###Basic Request handling process
 - Client sends a request to a specific URL
 - Dispatcher Servlet receives the request
 - DS passes request to a specific controller depending on the URL requested
@@ -14,7 +14,7 @@
 - DS contacts the chosen view (e.g. Thymeleaf, Freemarker, JSP) with model data and it renders the output depending on the model data
 - Rendered output is returned to the client as response
 
-####Application Contexts
+###Application Contexts
 - Two application contexts are created: Root And Web
 - Root Application Context: Web independent; Services, Repositories, ...
 - Web Application Context: Contains only web layer specific beans - Controllers, Views, Wier Resolvers,...
@@ -49,7 +49,7 @@ If contextConfigLocation is not declared, it defaults to WEB-INF\dispatcher-serv
 </servlet> 
 ```
 
-####Minimal MVC Configuration
+###Minimal MVC Configuration
 web.xml + WEB-INF/dispatcher-servlet.xml (for xml, annotation based alternative instead)
 
 **web.xml**  
@@ -71,7 +71,7 @@ In configuration file for Web Application Context declare a controller to serve 
 <bean id="myController" class="com.example.MyController" />
 ```
 
-####Configuration without web.xml 
+###Configuration without web.xml 
 - From Servlet 3.x web.xml is optional
 - Can declare servlets and filters using annotations or implementing interface ServletContainerInitializer
 - Needs Servlet 3.x compatible application server
@@ -81,7 +81,7 @@ In configuration file for Web Application Context declare a controller to serve 
     - AbstractContextLoaderInitializer - only Registers ContextLoaderListener
     - AbstractAnnotationConfigDispatcherServletInitializer - Registers ContextLoaderListener and defines Dispatcher Servlet, expects JavaConfig
     
-####XML MVC namespace
+###XML MVC namespace
 - In xml config, `<mvc:>` namespace can be used to greatly simplify configuration compared to previous versions
 - `<mvc:annotation-driven/>` to enable Default @MVC setup
     - @EnableWebMvc is equivalent is Java Configuration
@@ -98,10 +98,59 @@ In configuration file for Web Application Context declare a controller to serve 
     - ```<mvc:view-controller path="/foo" view-name = "foo"/>```
     - ```<mvc:redirect-view-controller path="/old" redirect-url="/new" status-code="308" keep-query-params="true"/>```
 
-####Java Config - @EnableWebMvc
+###Java Config - @EnableWebMvc
 - Equivalent of `<mvc:annotation-driven/>`
 - On class level on @Configuration class
 - Customisation - @Configuration class implements WebMvcConfigurer
     - Or for convenience extends WebMvcConfigurerAdapter, which implements given interface with empty methods
     - Methods - addInterceptors, addResourceHandlers (similiar to `<mvc:resource>`), configureDefaultServletHandling, addControllers, configureContentNegotiation
 - Not specified by Spring Boot, but similar config is; Should not be specified when using Boot; If specified boot skips mvc autoconfiguration and needs to be done manually
+  
+----------------
+  
+#MVC Components
+###Model
+
+- Is always created and passed to the view
+- If a mapped controller method has Model as a method parameter, then a model instance is automatically injected by Spring to that method
+- Any attributes set on injected model are preserved and passed to the View
+```java
+public String personDetail(Model model) {
+  ...
+  model.addAttribute("name", "Joe");
+  ...
+}
+```
+- Can be also added without attribute name `model.addAttribute(person);` Attribute name is then set depending on the added type name. E.g. Person type results in "person" name.
+
+###View
+
+- Template for rendering output to client based on Model data
+- Display: JSP, Thymeleaf, Freemarker, Velocity,...
+- Content: JSON, XML, PDF,...
+- Implements View interface - defines which content type and how to render
+```java
+public interface View {
+  String getContentType();
+  void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response) throws Exception;
+}
+```
+- JstlView - forwards to JSP page, model attributes are passed to the JSP as `${attributeName}`
+- Content generating view - unlike views which generate html and are declared and managed by Spring, these need to be declared manually
+    - Create view class which extends specific parent - e.g. AstractPdfView and implement details of generating content manually
+    - protected void buildPdfDocument(Map<String, Object> model, Document document, PdfWriter pdfWriter, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws Exception
+
+###Controller
+
+- POJO annotated @Controller
+- Has methods which corresponds to specific urls, incl. variants for different HTTP methods (GET, POST), parameters provided etc.
+- Methods are mapped to URLs usually using annotations @RequestMapping
+- Controller fills Model with data, which is later provided to the View
+- Controller can directly return data using @ResponseBody annotation
+- Or can return a Logical view name as String. That is later resolved to a specific view using ViewResolvers
+- If returns null or return type is void, the view name will be determined from URL requested
+    - remove leading slash and remove extension
+    - using default RequestToViewNameTranslator
+- When specified as method parameters, certain objects can be automatically injected by spring to be used inside the controller methods
+    - Model, HttpServletRequest, HttpServletResponse, Locale, Principal, HttpSession, HttpEntity<?>, TimeZone,...
+- Can be well unit tested (is POJO) without container
