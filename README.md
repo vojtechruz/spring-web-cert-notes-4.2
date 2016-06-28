@@ -285,3 +285,94 @@ public void addInterceptors(InterceptorRegistry registry) {
   </mvc:interceptor>
 </mvc:interceptors>
 ```
+
+----------------
+
+#Resolving Views
+###View Resolution Sequence
+1. Controller returns logical view name to DispatcherServlet.
+2. ViewResolvers are asked in sequence (based on their Order).
+3. If ViewResolver matches the logical view name then returns which View should be used to render the output. If not, it returns null and the chain continues to the next ViewResolver.
+4. Dispatcher Servlet passes the model to the Resolved View and it renders the output.
+
+###ViewResolver
+- Returns View to handle to output rendering based on Logical View Name (provided by the controller) and locale
+- This way controller is not coupled to specific view technology (returns only logical view name)
+- Default View resolver already configured is InternalResourceViewResolver, which is used to render JSPs (JstlView). Configures prefix and suffix to logical view name which then results to path to specific JSP.
+```xml
+<bean class= "org.springframework.web.servlet.view.InternalResourceViewResolver" >
+  <property name= "prefix" value= "/WEB-INF/" />
+  <property name ="suffix" value =".jsp" />
+</bean>
+```
+###View Resolver Chain
+- Beans of ViewResolver are discovered by Type and added to View Resolver Chain
+- When a controller returns a logical view name, Dispatcher Servlet queries ViewResolvers in the chain depending on their Order. When first resolver returns View, chain does not continue
+- Some resolvers can be only last (JSTL, JSON, XSLT,...), other anywhere in the chain (Tiles, Velocity, Freemarker,...) - they return null if view not resolved -> chain continues
+- Order can be set
+    - In Java
+```java
+@Bean
+public BeanNameViewResolver beanNameViewResolver() {
+  BeanNameViewResolver resolver = new BeanNameViewResolver();
+  resolver.setOrder(1);
+  return resolver;
+}
+```
+    -  In Xml
+```xml
+<bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+  <property name="order" value="1" />
+</bean>
+```
+    -  Or in xml using mvc namespace - order is determined by order of resolver elements in the tag
+```xml
+<mvc:view-resolvers>
+  <!--Order 0, BeanNameViewResolver-->
+  <mvc:bean-name/>
+  <!--Order 1, TilesViewResolver-->
+  <mvc:tiles/>
+</mvc:view-resolvers>
+```
+
+###Additional View Resolvers
+- UrlBasedViewResolver
+    -  Logical view name is resolved to a resource location
+    -  Can use ":redirect" and ":forward" prefix
+    -  Many implementations: InternalResourceViewResolver (default, JSP), FreeMarkerViewResolver, XsltViewResolver, VelocityViewResolver,...
+- BeanNameViewResolver
+    -  Logical view name is interpreted as a bean name (bean which implements View interface)
+- XmlViewResolver
+    - Similar to BeanNameViewResolver, but does not search for every bean, but just in a specific xml file
+
+###Content Negotiation
+- One resource can be rendered as different type to the client depending on the request
+- Can be based on http header, file extension or http request parameter
+- Can be achieved by having multiple controller methods for each content type one, not recommended
+- Can be achieved by having one controller method with branching logic depending or request details, not recommended
+
+###ContentNegotiatingViewResolver
+
+- Preferred way is to have a special view resolver to do the content negotiation logic - ContentNegotiatingViewResolver
+- CNVR delegates to other view resolvers
+    - View interface has getContentType() method, which returns content type the view produces (JstlView has text/html)
+    - After delegated resolver returns view, CNVR checks whether its content type (by calling getContentType()) is what was requested by the client
+    - If so, the view is returned to the dispatcher servlet, otherwise next view resolver is called by the CNVR
+- CNVR must be the first
+- CNVR can have following properties configured
+    - order - same as other view resolvers, must be first
+    - viewResolvers - can specify to which view resolvers will delegate to; by default to all of them
+    - contentNegotiationManager - if not specified, default ContentNegotiationManager will be used
+    - useNotAcceptableStatusCode - if true, will return HTTP 406 when view not resolved, otherwise the view resolver chain will just continue
+
+###ContentNegotiationManager
+
+- The ContentNegotiatingViewResolver handles delegation to other view resolvers and checking whether they are able to provide desired content type. ContentNegotiationManager decides what the desired type is based on the client’s request.
+- @EnableWebMvc or <mvc:annotation-driven /> creates default ContentNegotiationManager
+- Content type resolution process order
+   1. Check if there is an extension in url (.json); favorPathExtension=true
+   2. Check if there is url parameter format (?format=json); favorParameter=true; "format" parameter name can be changed using parameterName property
+   3. Check if there is a HTTP Accept header (Accept: application/json); ignoreAcceptHeader=false
+- Accept header usually not used as browsers by default always send text/html
+- If match is not found, default content the can be specified using defaultContentType property
+- Mapping of format (html) to mime-type (text/html) is done either by JAF - Java Activation Framework (by default; can be disabled by ueJaf=false) or by specifying a map of format->mime-type pairs using mediaTypes
