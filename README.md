@@ -371,7 +371,7 @@ public BeanNameViewResolver beanNameViewResolver() {
 - @EnableWebMvc or `<mvc:annotation-driven />` creates default ContentNegotiationManager
 - Accept header usually not used as browsers by default always send text/html
 - If match is not found, default content the can be specified using defaultContentType property
-- Mapping of format (html) to mime-type (text/html) is done either by JAF - Java Activation Framework (by default; can be disabled by ueJaf=false) or by specifying a map of format→mime-type pairs using mediaTypes
+- Mapping of format (html) to mime-type (text/html) is done either by JAF - Java Activation Framework (by default; can be disabled by useJaf=false) or by specifying a map of format→mime-type pairs using mediaTypes
 
 **Content type resolution process order**
    1. Check if there is an extension in url (.json); favorPathExtension=true
