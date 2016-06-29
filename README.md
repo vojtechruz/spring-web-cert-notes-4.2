@@ -402,7 +402,7 @@ public BeanNameViewResolver beanNameViewResolver() {
 ```
 - In JSP, attributes defined in tiles.xml using putAttribute are rendered using `<tiles:insertAttribute name="title"/>`
 - Can use wildcards
-- name foo/bar => {1}/{2} => title = foo, content = bar
+- name foo/bar → {1}/{2} → title = foo, content = bar
 ```xml
 <definition name="*/*" extends="base">
   <put-attribute name="title" value="{1}" />
@@ -435,24 +435,25 @@ public TilesConfigurer tilesConfigurer() {
 **XML Configuration (Tiles 3+)**  
     - If no definition locations specified, defaults to /WEB-INF/tiles.xml
 ```xml
-<mvc:tiles-configurer id="tilesConfigurer" check-refresh="true" validate-definitions ="true"
+<mvc:tiles-configurer id="tilesConfigurer" check-refresh="true" validate-definitions ="true">
   <mvc:definitions location="/WEB-INF/tiles.xml"/>
   <mvc:definitions location="/WEB-INF/foo/tiles.xml"/>
 </mvc:tiles-configurer>
 ```
-**XML Configuration (Tiles 2) - manually by declaring bean of type TilesConfigurer in xml (Tiles 2)**  
+**XML Configuration (Tiles 2)**   
+- manually by declaring bean of type TilesConfigurer in xml (Tiles 2) 
 
 ###TilesViewResolver configuration
 
 **XML Configuration - using `<mvc:>` namespace**  
 ```xml
 <mvc:view-resolvers>
-  <mvc:tiles />
-</mvc:view-resolvers >
+  <mvc:tiles/>
+</mvc:view-resolvers>
 ```
 **XML Configuration - specifically declaring as a bean**  
 ```xml
-<bean class = "org.springframework.web.servlet.view.tiles3.TilesViewResolver"/ >
+<bean class = "org.springframework.web.servlet.view.tiles3.TilesViewResolver"/>
 ```
 **Java Configuration**  
 ```java
