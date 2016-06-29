@@ -103,7 +103,7 @@ In configuration file for Web Application Context declare a controller to serve 
 - On class level on @Configuration class
 - Customisation - @Configuration class implements WebMvcConfigurer
     - Or for convenience extends WebMvcConfigurerAdapter, which implements given interface with empty methods
-    - Methods - addInterceptors, addResourceHandlers (similiar to `<mvc:resource>`), configureDefaultServletHandling, addControllers, configureContentNegotiation
+    - Methods - addInterceptors, addResourceHandlers (similar to `<mvc:resource>`), configureDefaultServletHandling, addControllers, configureContentNegotiation
 - Not specified by Spring Boot, but similar config is; Should not be specified when using Boot; If specified boot skips mvc autoconfiguration and needs to be done manually
   
 ----------------
@@ -367,7 +367,7 @@ public BeanNameViewResolver beanNameViewResolver() {
 
 ###ContentNegotiationManager
 - The ContentNegotiatingViewResolver handles delegation to other view resolvers and checking whether they are able to provide desired content type. ContentNegotiationManager decides what the desired type is based on the client’s request.
-- @EnableWebMvc or <mvc:annotation-driven /> creates default ContentNegotiationManager
+- @EnableWebMvc or `<mvc:annotation-driven />` creates default ContentNegotiationManager
 - Accept header usually not used as browsers by default always send text/html
 - If match is not found, default content the can be specified using defaultContentType property
 - Mapping of format (html) to mime-type (text/html) is done either by JAF - Java Activation Framework (by default; can be disabled by ueJaf=false) or by specifying a map of format→mime-type pairs using mediaTypes
@@ -376,3 +376,87 @@ public BeanNameViewResolver beanNameViewResolver() {
    1. Check if there is an extension in url (.json); favorPathExtension=true
    2. Check if there is url parameter format (?format=json); favorParameter=true; "format" parameter name can be changed using parameterName property
    3. Check if there is a HTTP Accept header (Accept: application/json); ignoreAcceptHeader=false
+
+
+----------------
+
+#Composite Views - Apache Tiles
+###Apache Tiles
+- Tempting framework for composite views
+- Used to be part of Struts 1
+- Implementation of Composite View Pattern (see Patterns of Enterprise Application Architecture)
+- Tiles 1 not Supported, Tiles 2 since Spring 2.5, Tiles 3 since Spring 3.2
+- Tiles definition in xml file - tiles.xml
+- Each definition represents a view
+```xml
+<tiles-definitions>
+  <definition name="base" template="/WEB-INF/tiles/main.jsp" />
+  <definition name="foo" extends="base">
+    <put-attribute name="title" value="Foo" />
+  </definition>
+  <definition name="bar" extends="base">
+    <put-attribute name="title" value="Bar" />
+  </definition>
+</tiles-definitions>
+```
+- In JSP, attributes defined in tiles.xml using putAttribute are rendered using `<tiles:insertAttribute name="title"/>`
+- Can use wildcards
+- name foo/bar => {1}/{2} => title = foo, content = bar
+```xml
+<definition name="*/*" extends="base">
+  <put-attribute name="title" value="{1}" />
+  <put-attribute name="content" value="{2}" />
+</definition>
+```
+- Tiles attributes can be either String, template (if starts with /) or another tiles definition (if definition name matches)
+- A definition can inherit from other (using 'extends=parentDefinitionName')
+
+###Setting up Tiles in Spring
+
+- Set Up TilesConfigurer
+- Add TilesViewResolver instead of default InternalResourceViewResolver
+- Create tiles.xml with tile definitions
+- Create JSP templates used for tile rendering
+
+###TilesConfigurer configuration
+
+**Java Configuration**  
+```java
+@Bean
+public TilesConfigurer tilesConfigurer() {
+  TilesConfigurer tilesConfigurer = new TilesConfigurer();
+  tilesConfigurer.setDefinitions("/WEB-INF/tiles.xml", "/WEB-INF/foo/tiles.xml");
+  tilesConfigurer.setCheckRefresh(true); // default false
+  tilesConfigurer.setValidateDefinitions(true);
+  return tilesConfigurer;
+}
+```
+**XML Configuration (Tiles 3+)**  
+    - If no definition locations specified, defaults to /WEB-INF/tiles.xml
+```xml
+<mvc:tiles-configurer id="tilesConfigurer" check-refresh="true" validate-definitions ="true"
+  <mvc:definitions location="/WEB-INF/tiles.xml"/>
+  <mvc:definitions location="/WEB-INF/foo/tiles.xml"/>
+</mvc:tiles-configurer>
+```
+**XML Configuration (Tiles 2) - manually by declaring bean of type TilesConfigurer in xml (Tiles 2)**  
+
+###TilesViewResolver configuration
+
+**XML Configuration - using `<mvc:>` namespace**  
+```xml
+<mvc:view-resolvers>
+  <mvc:tiles />
+</mvc:view-resolvers >
+```
+**XML Configuration - specifically declaring as a bean**  
+```xml
+<bean class = "org.springframework.web.servlet.view.tiles3.TilesViewResolver"/ >
+```
+**Java Configuration**  
+```java
+@Bean
+public TilesViewResolver tilesViewResolver() {
+  return new TilesViewResolver();
+}
+```
