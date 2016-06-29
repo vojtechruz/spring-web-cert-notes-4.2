@@ -433,7 +433,7 @@ public TilesConfigurer tilesConfigurer() {
 }
 ```
 **XML Configuration (Tiles 3+)**  
-    - If no definition locations specified, defaults to /WEB-INF/tiles.xml
+- If no definition locations specified, defaults to /WEB-INF/tiles.xml
 ```xml
 <mvc:tiles-configurer id="tilesConfigurer" check-refresh="true" validate-definitions ="true">
   <mvc:definitions location="/WEB-INF/tiles.xml"/>
@@ -462,3 +462,97 @@ public TilesViewResolver tilesViewResolver() {
   return new TilesViewResolver();
 }
 ```
+
+----------------
+
+#Resources
+###Url Fingerprinting & Cache Busting
+
+- Static resources (JS, CSS,…) caching with long periods (like a year)
+- When resource changes, cache needs to be invalidated (busted)
+- Each resource url has added "fingerprint" - String like version number or hash of contents of the file
+- When resource changes, the fingerprint changes as well → url changes and browser considers it a new resource
+
+
+###Resource Resolvers
+
+- Spring can define chained Resource Handlers, which from given path resolve specific resource
+- If a resolver does not resolve, the next one in the chain gets the chance
+- Handler can have attacher Resource Resolver, which find the actual resource and can also alter resource URL
+- Handler can also have ResourceTransformer, which can alter contents of the resource
+- Resolver can point to compressed version of resource, add fingerprint to the url,...
+- GzipResourceResolver can be used to server compressed versions of resources
+- To enable resource versions in URL
+    - ResourceUrlProviderExposingInterceptor filter must be declared as a servlet filter in web.xml
+    - JSP, there is special tag for urls: `<script src="<spring:url value="/resources/foo.js"/>"></script>`, which resolves the url to its versioned variant  
+
+**Resource Handler and resolver configuration in Java Config - WebMvcConfigurerAdapter**  
+```java
+@Value("${app.version}")
+protected String version;
+
+@Override
+public void addResourceHandlers(ResourceHandlerRegistry registry) {
+  ResourceResolver resolver = new VersionResourceResolver();
+  resolver.addFixedVersionStrategy(version, "/**/*.js") //Resources matching will have version specified in version variable
+          .addContentVersionStrategy("/**")); //Resources matching will have version based on their content hash
+
+  registry.addResourceHandler("/resources/**")
+          .addResourceLocations("classpath:/META-INF/web-content/")
+          .resourceChain(true)
+          .addResolver(resolver);
+}
+```
+
+**XML config using `<mvc:resources>`**
+```java
+<mvc:resources mapping="/resources/**" cachePeriod="31556926" location="/, classpath:/META-INF/web-content/">
+  <mvc:resource-chain resource-cache="true">
+    <mvc:resolvers>
+      <mvc:version-resolver>
+        <mvc:fixed-version-strategy version="${app.version}" patterns="/**/*.js"/>
+        <mvc:content-version-strategy patterns="/**"/>
+      </mvc:version-resolver>
+    </mvc:resolvers>
+  </mvc:resource-chain>
+</mvc:resources>
+```
+###MessageSource
+
+- Externalisation of messages, for internationalization
+- Only one bean per applicationContext named messageSource (bean is discovered by name messageSource)
+- Using Java's ResourceBundle
+- Can use either ResourceBundleMessageSource or ReloadableResourceBundleMessageSource (allows changing properties files and  automatically reloading changes)
+**XML config**  
+- basename foo resolves to foo resource bundle (foo.properties, foo_en.properties, foo_fr.properties,...)
+```java
+<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+  <property name="basenames">
+    <list>
+      <value>classpath:messages/foo<value/>
+    </list>
+  </property>
+</bean>
+```
+
+**Java Config**  
+```java
+@Bean
+MessageSource messageSource() {
+  ResourceBundleMessageSource source = new ResourceBundleMessageSource();
+  source.setBasename("classpath:messages/foo" );
+  return source;
+}
+```
+
+###Retrieving messages
+
+- Inject MessageSource in the class
+- Then `messageSource.getMessage(code, args, defaultMessage, locale);`
+    - args can be used to fill placeholders in the message
+- JstlView supports displaying messages from messageSource using
+```xml
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:message key="person.firstname" />
+```
+               
