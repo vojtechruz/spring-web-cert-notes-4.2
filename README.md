@@ -523,8 +523,9 @@ public void addResourceHandlers(ResourceHandlerRegistry registry) {
 - Only one bean per applicationContext named messageSource (bean is discovered by name messageSource)
 - Using Java's ResourceBundle
 - Can use either ResourceBundleMessageSource or ReloadableResourceBundleMessageSource (allows changing properties files and  automatically reloading changes)  
+
 **XML config**  
-- basename foo resolves to foo resource bundle (foo.properties, foo_en.properties, foo_fr.properties,...)
+basename foo resolves to foo resource bundle (foo.properties, foo_en.properties, foo_fr.properties,...)
 ```java
 <bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
   <property name="basenames">
