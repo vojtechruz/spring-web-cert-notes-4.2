@@ -309,8 +309,9 @@ public void addInterceptors(InterceptorRegistry registry) {
 - Beans of ViewResolver are discovered by Type and added to View Resolver Chain
 - When a controller returns a logical view name, Dispatcher Servlet queries ViewResolvers in the chain depending on their Order. When first resolver returns View, chain does not continue
 - Some resolvers can be only last (JSTL, JSON, XSLT,...), other anywhere in the chain (Tiles, Velocity, Freemarker,...) - they return null if view not resolved → chain continues
-- Order can be set
-**In Java Config**
+- Order can be set  
+
+**In Java Config**  
 ```java
 @Bean
 public BeanNameViewResolver beanNameViewResolver() {
@@ -319,13 +320,13 @@ public BeanNameViewResolver beanNameViewResolver() {
   return resolver;
 }
 ```  
-**In Xml**
+**In XML**
 ```xml
 <bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
   <property name="order" value="1" />
 </bean>
 ```  
-**xml using mvc namespace - order is determined by order of resolver elements in the tag**
+**In XML using mvc namespace - order is determined by order of resolver elements in the tag**
 ```xml
 <mvc:view-resolvers>
   <!--Order 0, BeanNameViewResolver-->
