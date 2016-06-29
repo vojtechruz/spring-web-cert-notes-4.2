@@ -522,7 +522,7 @@ public void addResourceHandlers(ResourceHandlerRegistry registry) {
 - Externalisation of messages, for internationalization
 - Only one bean per applicationContext named messageSource (bean is discovered by name messageSource)
 - Using Java's ResourceBundle
-- Can use either ResourceBundleMessageSource or ReloadableResourceBundleMessageSource (allows changing properties files and  automatically reloading changes)
+- Can use either ResourceBundleMessageSource or ReloadableResourceBundleMessageSource (allows changing properties files and  automatically reloading changes)  
 **XML config**  
 - basename foo resolves to foo resource bundle (foo.properties, foo_en.properties, foo_fr.properties,...)
 ```java
@@ -540,7 +540,7 @@ public void addResourceHandlers(ResourceHandlerRegistry registry) {
 @Bean
 MessageSource messageSource() {
   ResourceBundleMessageSource source = new ResourceBundleMessageSource();
-  source.setBasename("classpath:messages/foo" );
+  source.setBasename("classpath:messages/foo");
   return source;
 }
 ```
