@@ -1276,7 +1276,9 @@ In xml enable @Secured annotations
 
 On method level use (roles only, no SPEL)
 ```java
-@Secured("IS_AUTHENTICATED_FULLY") or @Secured("ROLE_ADMIN") or @Secured({"ROLE_ADMIN", "ROLE_USER"})
+@Secured("IS_AUTHENTICATED_FULLY") 
+@Secured("ROLE_ADMIN")
+@Secured({"ROLE_ADMIN", "ROLE_USER"})
 ```
     
 **Pre/Post authorize**  
@@ -1291,3 +1293,87 @@ On method level use
 ```java
 @PreAuthorize("hasRole(‘ROLE_ADMIN')")
 ```
+
+----------------
+
+#Spring Boot
+
+- Convention over configuration - pre-configures Spring app by reasonable defaults, which can be overridden
+- Maven and gradle integration
+- MVC enabled by having spring-boot-starter-web as a dependence
+    - Registers Dispatcher servlet
+    - Does same as @EnableWebMvc + more
+    - Automatically serves static resources from /static, /public, /resources or /META-INF/resources
+    - Templates are served from /templates (Velocity, FreeMarker, Thymeleaf)
+    - Registers BeanNameViewResolver if beans implementing View interface are found
+    - Registers ContentNegociatingViewResolver, InternalResourceViewResolver (prefix and suffix configurable in application.properties)
+    - Customisation of auto-configured beans should be done using WebMvcConfigurerAdapter as usual
+- Main Class annotated with @SpringBootApplication, can be run as a jar with embedded application server (Tomcat by default, can be changed for example to Jetty or Undertow)
+    - Actually consists of three annotations @Configuration, @EnableAutoConfiguration and @ComponentScan
+    - @EnableAutoConfiguration configures modules based on presence of certain classes on class path - based on @Conditional
+    - Manually declared beans usually override beans automatically created by AutoConfiguration (@ConditionalOnMissingBean is used), usually bean type and not name matters
+    - Can selectively exclude some AutoConfigutation classes @EnableAutoConfiguration(exclude=DataSourceAutoConfiguration.class)
+
+```java
+@SpringBootApplication
+public class Application {
+  //run in embedded container
+  public static void main(String[] args) {
+    SpringApplication.run(Application.class, args);
+  }
+  
+  //run as war, needs to have <packaging>war</packaging> in pom.xml
+  @Override
+  protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+    return application.sources(Application.class);
+  }
+}
+```
+
+- Need to add proper maven parent and dependencies
+- Using "starter" module dependencies -> as transitive dependencies bundles versions which are tested to work well together
+- spring-boot-starter, spring-boot-starter-web, spring-boot-starter-test, ...
+- Parent pom defines all the dependencies using dependency management, specific versions are not defined in our pom.xml
+- Only version which needs to be specifically declared is parent pom version
+```xml
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter</artifactId>
+</dependency>
+
+<parent>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-parent</artifactId>
+  <version>1.3.0.RELEASE</version>
+</parent>
+```
+
+Application configuration is externalised by default to application.properties file
+- Located in workingdirectory/config or working directory or classpath/config or class path
+- PropertySource automatically created
+- Some config options
+```
+logging.level.org.springframework=DEBUG
+logging.level.com.example=INFO
+
+spring.datasource.url=jdbc:mysql://localhost/test
+spring.datasource.username=user
+spring.datasource.password=password
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+
+server.port=8081 #8080 is default of Tomcat
+server.address=...
+server.session-timeout=600
+server.context-path=/ #/ is default
+server.servlet-path=/ #/ is default
+```
+
+Web container can be configured in Java dynamically by implementing EmbeddedServletContainerCustomizer interface and registering resulting class as a @Component
+```java
+@Override
+public void customize(ConfigurableEmbeddedServletContainer container) {
+  container.setPort(8081);
+  container.setContextPath("/foo");
+}
+```
+Or if needed more fine-grained configuration - declare bean of type EmbeddedServletContainerFactory
