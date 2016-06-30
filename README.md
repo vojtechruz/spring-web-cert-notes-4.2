@@ -767,13 +767,11 @@ Can specify binding configuration - @InitBinder annotation either directly in Co
 - Validators
 - Allowed fields - Either whitelist or blacklist; Whitelist preferred as it is safer
 ```java
-     @InitBinder
+@InitBinder
 public void initBinder(WebDataBinder binder) {
-     binder.setAllowedFields( "firstName", "lastName");
+  binder.setAllowedFields( "firstName", "lastName");
 }
-```
 
-```java
 @InitBinder
 public void initBinder(WebDataBinder binder) {
   binder.setDisallowedFields( "id", "*Id"); //can use wildcards
@@ -799,16 +797,16 @@ Additional error message types
 
 ###Validation
 
-- Spring supports JSR-303 Bean Validation
-    - Hibernate is reference implementation
-    - Annotations on fields
-    - @NotNull, @NotEmpty (not null and not empty collection or string; Hibernate specific), @Min, @Max, @Pattern (regex), @Size (collection size or string length)
+Spring supports JSR-303 Bean Validation
+- Hibernate is reference implementation
+- Annotations on fields
+- @NotNull, @NotEmpty (not null and not empty collection or string; Hibernate specific), @Min, @Max, @Pattern (regex), @Size (collection size or string length)
 ```java
 @Size(min=3 , max= 20)
 private String firstName;
 ```
 
-- If form Object as Controller method param is marked as @Valid, form is validated and validation errors are added to BindingResult with regular binding errors, which can be displayed by <form:errors>
+If form Object as Controller method param is marked as @Valid, form is validated and validation errors are added to BindingResult with regular binding errors, which can be displayed by <form:errors>
 ```java
 public String editPerson(@Valid Person person, BindingResult bindingResult)
 ```
@@ -830,7 +828,7 @@ boolean supports(Class<?> clazz);
 ```
 - Validation failed using errors.rejectValue(String field, String errorCode); - error code interpretable as a message key.
 - Register validator using @InitBinder in controller
-```
+```java
 @InitBinder
 public void initBinder(WebDataBinder binder) {
   binder.setValidator(new FooValidator());
@@ -853,7 +851,7 @@ public void initBinder(WebDataBinder binder) {
 - `<fmt:formatDate value=“${person.dateOfBirth}" pattern="MM/dd/yyyy" />`
 
 **Formatting using formatters implementing Formatter Interface**  
-- Implement Formatter interface
+Implement Formatter interface
 ```java
 class DurationFormatter implements Formatter<Duration> {
   public Duration parse(String text, Locale locale) throws ParseException {
@@ -865,7 +863,7 @@ class DurationFormatter implements Formatter<Duration> {
   }
 }
 ```
-- Then registry in WebMvcConfigurerAdapter
+Then registry in WebMvcConfigurerAdapter
 ```java
 @Override
 public void addFormatters(FormatterRegistry registry) {
