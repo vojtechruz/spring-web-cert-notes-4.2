@@ -620,7 +620,8 @@ public String getPerson(Model model) {
 
 **Retrieve on every request using @ModelAttribute**  
 - Good when form represents existing object
-- In PUT method, Person is injected from @ModelAttribute method and overriden with data sent in form from client
+- In PUT method, Person is injected from @ModelAttribute method and overridden with data sent in form from client
+
 ```java
 @ModelAttribute
 public Person addToModel(@PathVariable String personId) {
@@ -636,9 +637,11 @@ public String getPerson() {
 public String editPerson(Person person) {
   return "redirect:success";
 }
+```
 
-**Retrieve on every request using  @SessionAttributes ( "person" )**  
+**Retrieve on every request using  @SessionAttributes ("person")**  
 - May not scale well (uses session)
+
 ```java
 @Controller
 @RequestMapping(path = "edit")
@@ -662,8 +665,9 @@ public class PersonController {
 
 ###JSP form support
 
-- Use Spring’s custom tag library for forms - `<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>`
+- Use Spring’s custom tag library for forms `<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>`
 - Instead of regular html `<form>` element use `<form:form>`
+- Use `<form:input>` instead of regular `<input>` tag
 
 ###JSP - Form
 
@@ -698,17 +702,17 @@ public class PersonController {
 <form:select/>
 ```
 
-**Using collection**  
+**Collection**  
 ```xml
 <form:select path="contactPersonId" items="${contacts}" itemLabel="lastName" itemValue="id" />
 ```
 
-**Using map -  map key is interpreted as select item value and map value as select item label**
+**Map -  map key is interpreted as a select item value and map value as a select item label**  
 ```xml
 <form:select path="contactPersonId" items="${contacts}"/>
 ```
 
-**Or combine static and dynamic items**
+**Combining static and dynamic items**  
 ```xml
 <form:select path="contactPersonId">
   <form:option value="None">None</form:option>
