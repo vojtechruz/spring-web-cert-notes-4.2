@@ -557,3 +557,161 @@ MessageSource messageSource() {
 <fmt:message key="person.firstname" />
 ```
                
+----------------
+
+#MVC Forms - Basics
+
+###Basic Workflow
+
+1. Form page fetched through HTTP GET
+2. Form is submitted through HTTP POST
+3. Server-Side form validation, save data in form object
+4. Successful Submit results in POST-Redirect-GET to avoid re-POST (Search forms do not follow this - submitted with GET instead of post, no P-R-G as repost is not an issue)
+
+###Redirects
+
+- After POST, on success, redirect (HTTP 302) should be performed to a new resource obtained by GET to prevent resubmit
+- Controller method adds "redirect:" prefix to logical view name
+- It is a new request, all data is lost, if something needs to be passed to redirected page, there are two options  
+
+**Pass as url parameters in newly requested resource (/success?firstName=John&lastName=Doe)**  
+```java
+@RequestMapping(method = RequestMethod.POST)
+public String editPerson(@ModelAttribute("personAttribute") Person person, RedirectAttributes attributes) {
+  attributes.addAttribute("firstName", person.getFirstName());
+  attributes.addAttribute("lastName", person.getLastName());
+  return "redirect:success";
+}
+```
+
+**Store params in flash scope on server - Better for complex objects, data not visible on client in the url**  
+```java
+@RequestMapping(method = RequestMethod.POST)
+public String editPerson(@ModelAttribute("personAttribute") Person person, RedirectAttributes attributes) {
+  attributes.addFlashAttribute("firstName", person.getFirstName());
+  attributes.addFlashAttribute("lastName", person.getLastName());
+  return "redirect:success";
+}
+```
+###Form Object
+
+- Could be domain object directly but has several disadvantages
+    - Security concerns
+    - Limitations - default constructor, getters and setters
+    - Presentation layer logic leaks to Domain object (formatting, ...)
+- Better - dedicated form object
+    - Specific to presentation layer
+    - Just what specific form needs, nothing extra
+    - Not always is form direct representation of domain object
+    - Contains formatting and validation, type conversion to domain object
+
+###Managing form object
+Form needs to be accessed across multiple requests (initial GET, then POST, again on submit error,…), possible approaches are:
+
+**Create new instance every request**  
+- Good when form represents creation of a new object
+```java
+@RequestMapping(method = RequestMethod.GET)
+public String getPerson(Model model) {
+  model.addAttribute("person", new Person());
+  return "editPerson";
+}
+```
+
+**Retrieve on every request using @ModelAttribute**  
+- Good when form represents existing object
+- In PUT method, Person is injected from @ModelAttribute method and overriden with data sent in form from client
+```java
+@ModelAttribute
+public Person addToModel(@PathVariable String personId) {
+  return personService.get(personId);
+}
+
+@RequestMapping(method = RequestMethod.GET)
+public String getPerson() {
+  return "editPerson";
+}
+
+@RequestMapping(method = RequestMethod.PUT)
+public String editPerson(Person person) {
+  return "redirect:success";
+}
+
+**Retrieve on every request using  @SessionAttributes ( "person" )**  
+- May not scale well (uses session)
+```java
+@Controller
+@RequestMapping(path = "edit")
+@SessionAttributes("person")//"person" model attribute should be stored in session
+public class PersonController {
+  
+  @RequestMapping(method = RequestMethod.GET)
+  public String getPerson(@PathVariable String personId, Model model) {
+    model.addAttribute("person", personService.get(personId));//put to model AND to session
+    return "editPerson";
+  }
+
+  @RequestMapping(method = RequestMethod.PUT)
+  public String editPerson(Person person, SessionStatus sessionStatus) {
+    personService.update(person);
+    sessionStatus.setComplete();//"person" can be removed from the session
+    return "redirect:success";
+  }
+}
+```
+
+###JSP form support
+
+- Use Spring’s custom tag library for forms - `<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>`
+- Instead of regular html `<form>` element use `<form:form>`
+
+###JSP - Form
+
+- modelAtribute links to attribute in model with "person" name - Form Object. Form object is POJO.
+- When form is rendered for the first time, the form is pre-filled with data from modelAttribute
+- `<form:errors>` shows error messages
+```xml
+<form:form name="personForm" action="..." method="post" modelAttribute="person">
+  ...
+</form:form>
+```
+
+###JSP - Input
+
+- Types - color, date, datetime, datetime-local, email, month, number,range, search, tel, time, url, week
+- Additional tags - checkbox, checkboxes, hidden, label, password, radiobutton, radiobuttons, textarea
+```xml
+<form:form modelAttribute="person" ...>
+  <!--maps to person.firstName-->
+  <form:input path="firstName" />
+  <form:input path="favoriteColor" type="color" />
+</form:form>
+```
+
+###JSP - Select
+
+**Fixed values**  
+```xml
+<form:select path="gender">
+  <form:option label="Male" value="M"/>
+  <form:option label="Female" value="F"/>
+<form:select/>
+```
+
+**Using collection**  
+```xml
+<form:select path="contactPersonId" items="${contacts}" itemLabel="lastName" itemValue="id" />
+```
+
+**Using map -  map key is interpreted as select item value and map value as select item label**
+```xml
+<form:select path="contactPersonId" items="${contacts}"/>
+```
+
+**Or combine static and dynamic items**
+```xml
+<form:select path="contactPersonId">
+  <form:option value="None">None</form:option>
+  <form:options items="${contacts}" itemLabel="lastName" itemValue="id" />
+<form:select/>
+```
