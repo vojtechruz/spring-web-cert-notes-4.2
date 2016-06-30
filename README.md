@@ -170,7 +170,7 @@ Controller is a specific type of Handler.
 - SimpleUrlHandlerMapping
     - Mapping is defined declaratively
 ```xml
-<bean class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping" >
+<bean class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
   <property name= "mappings" >
     <value>
       /home=homeController
@@ -205,7 +205,7 @@ Controller is a specific type of Handler.
     - Adapts calls to @RequestMapping methods
     - Injects method params such as Model, HttpServletRequest, @PathVariables etc.
     - Interprets method return value - logical view name/ModelAndView/@ResponseBody/...
-    - Supports Optional<> - for @RequestParam, @RequestHeader ("Pragma"),...
+    - Supports `Optional<>` - for @RequestParam, @RequestHeader ("Pragma"),...
     - Enabled by default
     
    
@@ -719,3 +719,160 @@ public class PersonController {
   <form:options items="${contacts}" itemLabel="lastName" itemValue="id" />
 <form:select/>
 ```
+
+----------------
+
+#MVC FORMS - Binding, Validation & Formatting
+###Data Binding - View
+
+- Form tags automatically generate id and name attributes same as path
+- Following Form’s fields are bound to attribute "person" from model
+- Form input fields are bound to fields of "person" by "path" attribute (path="firstName" => person.firstName)
+- When form is rendered to the client for the first time, field values are pre-filled from the Model
+```xml
+<form:form modelAttribute="person" action="edit" method="post">
+  <form:label path="firstName">First Name</form:label>
+  <form:input path="firstName"/>
+  <form:label path="lastName">Last Name</form:label>
+  <form:input path="lastName"/>
+  <form:button>Submit</form:button>
+</form:form>
+```
+
+###Data Binding - Controller
+
+- In the GET method,fetching of view containing form is handled
+    - Controller can provide model data, which will be pre-filled in the form once it is rendered
+    - "person" attribute name added to model matches modelAttribute="person" in jsp form
+```java
+@RequestMapping(method = RequestMethod.GET)
+public String getPerson(Model model) {
+  model.addAttribute("person", new Person("John", "Doe"));
+  return "edit";
+}
+```
+- In the POST method, submit of form is handled
+    - Person is automatically injected by spring if declared as method param and through @ModelAttribute
+    - Is available as "personAttribute" variable in rendered tsp - here "done"
+    - If annotation not provided, variable name is based on type - Person type => "person" variable name
+    - When injecting method param Person, Spring looks for "person" attribute in model, if not found, new Person is created and its fields are populated from request params
+```java
+@RequestMapping(method = RequestMethod.POST)
+public String editPerson(@ModelAttribute("person") Person person) {
+  return "done";
+}
+```
+- Can Specify Binding Configuration
+- @InitBinder annotation either directly in Controller or ControllerAdvice
+    - Required fields
+    - Validators
+    - Allowed fields - Either whitelist or blacklist; Whitelist preferred as it is safer
+```java
+     @InitBinder
+public void initBinder(WebDataBinder binder) {
+     binder.setAllowedFields( "firstName", "lastName");
+}
+```
+
+```java
+@InitBinder
+public void initBinder(WebDataBinder binder) {
+  binder.setDisallowedFields( "id", "*Id"); //can use wildcards
+}
+```
+
+###Binding Errors
+
+- In controller method params, immediately after injected Form Object, BindingResult can be declared
+- public String editPerson(@ModelAttribute("personAttribute") Person person, BindingResult bindingResult)
+- bindingResult.hasErrors() can be checked, if so → return form view again for user to correct errors
+- Display errors on JSP using `<form:errors path="firstName" />`  for specific field or `<form:errors path="*" />` for all
+- Error messages are automatically taken from messageSource
+```
+typeMismatch - Any error of "type mismatch" during binding
+typeMismatch.firstName - type mismatch for specific field name
+typeMismatch.person.amount - type mismatch for specific form object and field
+typeMismatch.com.example.SerialNumber  - type mismatch for specific target type
+```
+- Additional error message types
+    - required - required fields can be set in @InitBinder method binder.setRequiredFields( "firstName", "lastName" )
+    - methodInvocation - if getter or setter on form fails
+
+###Validation
+
+- Spring supports JSR-303 Bean Validation
+    - Hibernate is reference implementation
+    - Annotations on fields
+    - @NotNull, @NotEmpty (not null and not empty collection or string; Hibernate specific), @Min, @Max, @Pattern (regex), @Size (collection size or string length)
+```java
+@Size(min=3 , max= 20)
+private String firstName;
+```
+
+- If form Object as Controller method param is marked as @Valid, form is validated and validation errors are added to BindingResult with regular binding errors, which can be displayed by <form:errors>
+```java
+public String editPerson(@Valid Person person, BindingResult bindingResult)
+```
+- `<mvc:annotation-driven>` or `@EnableWebMvc` enables JSR-303 validation globally (needs JSR-303 implementation on classpath)
+- Can define error messages in MessageSource
+```
+NotNull - General for any validation failure for given annotation
+NotNull.firstName - For any validation failure for given annotation and field
+NotNull.person.firstName - For any validation failure for given annotation, Form Object and its field
+NotNull.com.example.SerialNumber - For any validation failure for given Type
+```
+- Can define custom JSR-303 annotations
+- Alternative is custom Validator implementing `org.springframework.validation.Validator`
+```java
+public interface Validator {
+boolean supports(Class<?> clazz);
+  void validate(Object target, Errors errors);
+}
+```
+- Validation failed using errors.rejectValue(String field, String errorCode); - error code interpretable as a message key.
+- Register validator using @InitBinder in controller
+```
+@InitBinder
+public void initBinder(WebDataBinder binder) {
+  binder.setValidator(new FooValidator());
+}
+```
+###Formatters
+
+- Format data from Form fields (String usually) to Form Object and vice versa
+- `<mvc:annotation-driven>` or `@EnableWebMvc` already registers default set of formatters
+
+**Formatting using  Annotations**  
+    - Can be either directly on field of Form Object or on Controller method parameters
+```java
+@DateTimeFormat(iso=ISO.DATE)
+@NumberFormat(style=Style.CURRENCY)
+```
+
+**Formatting using FMT tags in JSP**  
+- `<fmt:formatNumber value="${account.interestAmount}" type="percent”>`
+- `<fmt:formatDate value=“${person.dateOfBirth}" pattern="MM/dd/yyyy" />`
+
+**Formatting using formatters implementing Formatter Interface**  
+- Implement Formatter interface
+```java
+class DurationFormatter implements Formatter<Duration> {
+  public Duration parse(String text, Locale locale) throws ParseException {
+    return Duration.parse(text);
+  }
+
+  public String print(Duration object, Locale locale) {
+    return object.toString();
+  }
+}
+```
+- Then registry in WebMvcConfigurerAdapter
+```java
+@Override
+public void addFormatters(FormatterRegistry registry) {
+  registry.addFormatter(new DurationFormatter());
+}
+```
+
+
+----------------
