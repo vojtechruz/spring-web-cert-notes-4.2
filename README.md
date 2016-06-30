@@ -1057,7 +1057,7 @@ public class PersonService {
 
 ###Spring Rest Support
 
-- @ResponseStatus (HttpStatus.OK) can set HTTP response status code
+- @ResponseStatus can set HTTP response status code
     - If used, void return type means no View (empty response body) and not default view!
     - 2** - sucess (201 Created, 204 No Content,...)
     - 3** - redirect
@@ -1084,3 +1084,101 @@ public class PersonService {
 - By default, html forms support only POST and GET as methods
     - spring's JSP taglib `<form:form>` supports all (by including hidden field for methods used)
     - `<form:form method= "put" ...>`
+    
+    
+----------------
+    
+    
+#AJAX
+###AJAX basics
+
+- Asynchronous Javascript And XML
+- Usually JSON instead of XML
+- Spring has no JavaScript integration by default
+- Instead of full page reload, only part of the page is asynchronously updated
+- Using XMLHttpRequest object  
+
+```javascript
+function performAjaxCall() {
+  var xhr = new XMLHttpRequest();
+  
+  xhr.onreadystatechange = function() {
+    if (this.readystate == 4) {
+      //handle response here
+    }
+  }
+  
+  xhr.open('GET', ’targetUrl');
+  xhr.send();
+}
+```
+###jQuery
+
+- Syntax: $(selector).action();
+    - $ means jQuery
+    - Selector query selects one or more html elements
+    - Action is a method to be performed on selected elements
+- Selectors
+    - `#header` - element with id="header"
+    - `.label` - element with class="label"
+    - `a` - elements of type <a>
+    - `ul li` - all `<li>` elements inside of `<ul>` element
+- Basic functions
+    - `val()` gets value of an element
+    - `val("foo")` sets value "foo" to an element
+    - `html()` gets html content of an element
+    - `html("<br>")` sets html content of an element
+    - `append("<br>")` appends html to current html content of and element
+    - `empty()` removes html content of an element
+    - `hide()` hides an element
+    - `show()` shows a hidden element
+    - `fadeIn(), fadeOut()` animations when showing/hiding
+    - `$(function() { … });`   executes on page load
+    - `on('event', function() { … })` executes function on a specific event - e.g. 'click'
+- Call Ajax using jQuery
+    - `$.get(url, parameters, callback, type)`
+    - `$.getJSON(url, parameters, callback)`
+
+###CORS
+
+- Browsers implement Same-Origin policy - ajax call allowed only from same origin - domain and port
+- Measure to prevent Cross Site Scripting attacks
+- CORS = Cross-Origin Resource Sharing, enables cross domain ajax in browsers
+- Useful e.g. for calling remote REST api on different domain
+- CORS Flow
+
+    1. A cross-domain ajax request from javascript is initiated from my-site.com to other-site.com
+    2. Browsers sends OPTIONS http request to other-site.com with header Origin: my-site.com
+    3. other-site.com responds with http header Access-Control-Allow-Origin with lists of allowed sites (or * wildcard for all) or may refuse to serve response to provided origin
+    4. Browser will not allow the request when server does not provide Access-Control-Allow-Origin header or if the sites mentioned do not match the origin
+
+- In spring @CrossOrigin enables CORS for a controller
+    - Both on class and/or method level
+    - @CrossOrigin means all origins are allowed
+    - Can restrict to specific origins with @CrossOrigin(origins="http://safe-site.com")  
+    
+**Enable CORS in XML - Application wide** 
+```xml
+<mvc:cors>
+  <mvc:mapping path="/api/**"
+       allowed-origins="http://domain1.com, http://domain2.com"
+       allowed-methods="GET, PUT"
+       allowed-headers="header1, header2, header3"/>
+  <mvc:mapping path="/resources/**" allowed-origins="http://domain1.com" />
+</mvc:cors>
+```
+
+**Enable CORS in Java Config - Application wide**
+```java
+@Configuration
+@EnableWebMvc
+public class WebConfig extends WebMvcConfigurerAdapter {
+  @Override
+  public void addCorsMappings(CorsRegistry registry) {
+    registry.addMapping("/api/**")
+            .allowedOrigins("http://domain2.com")
+            .allowedMethods("PUT", "DELETE")
+            .allowedHeaders("header1", "header2", "header3");
+  }
+}
+```
