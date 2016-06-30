@@ -727,7 +727,7 @@ public class PersonController {
 
 - Form tags automatically generate id and name attributes same as path
 - Following Form’s fields are bound to attribute "person" from model
-- Form input fields are bound to fields of "person" by "path" attribute (path="firstName" => person.firstName)
+- Form input fields are bound to fields of "person" by "path" attribute (path="firstName" → person.firstName)
 - When form is rendered to the client for the first time, field values are pre-filled from the Model
 ```xml
 <form:form modelAttribute="person" action="edit" method="post">
@@ -741,9 +741,9 @@ public class PersonController {
 
 ###Data Binding - Controller
 
-- In the GET method,fetching of view containing form is handled
-    - Controller can provide model data, which will be pre-filled in the form once it is rendered
-    - "person" attribute name added to model matches modelAttribute="person" in jsp form
+In the GET method,fetching of view containing form is handled
+- Controller can provide model data, which will be pre-filled in the form once it is rendered
+- "person" attribute name added to model matches modelAttribute="person" in jsp form
 ```java
 @RequestMapping(method = RequestMethod.GET)
 public String getPerson(Model model) {
@@ -751,22 +751,21 @@ public String getPerson(Model model) {
   return "edit";
 }
 ```
-- In the POST method, submit of form is handled
-    - Person is automatically injected by spring if declared as method param and through @ModelAttribute
-    - Is available as "personAttribute" variable in rendered tsp - here "done"
-    - If annotation not provided, variable name is based on type - Person type => "person" variable name
-    - When injecting method param Person, Spring looks for "person" attribute in model, if not found, new Person is created and its fields are populated from request params
+In the POST method, submit of form is handled
+- Person is automatically injected by spring if declared as method param and through @ModelAttribute
+- Is available as "personAttribute" variable in rendered tsp - here "done"
+- If annotation not provided, variable name is based on type - Person type → "person" variable name
+- When injecting method param Person, Spring looks for "person" attribute in model, if not found, new Person is created and its fields are populated from request params
 ```java
 @RequestMapping(method = RequestMethod.POST)
 public String editPerson(@ModelAttribute("person") Person person) {
   return "done";
 }
 ```
-- Can Specify Binding Configuration
-- @InitBinder annotation either directly in Controller or ControllerAdvice
-    - Required fields
-    - Validators
-    - Allowed fields - Either whitelist or blacklist; Whitelist preferred as it is safer
+Can specify binding configuration - @InitBinder annotation either directly in Controller or ControllerAdvice
+- Required fields
+- Validators
+- Allowed fields - Either whitelist or blacklist; Whitelist preferred as it is safer
 ```java
      @InitBinder
 public void initBinder(WebDataBinder binder) {
@@ -784,7 +783,7 @@ public void initBinder(WebDataBinder binder) {
 ###Binding Errors
 
 - In controller method params, immediately after injected Form Object, BindingResult can be declared
-- public String editPerson(@ModelAttribute("personAttribute") Person person, BindingResult bindingResult)
+- `public String editPerson(@ModelAttribute("personAttribute") Person person, BindingResult bindingResult)`
 - bindingResult.hasErrors() can be checked, if so → return form view again for user to correct errors
 - Display errors on JSP using `<form:errors path="firstName" />`  for specific field or `<form:errors path="*" />` for all
 - Error messages are automatically taken from messageSource
@@ -794,9 +793,9 @@ typeMismatch.firstName - type mismatch for specific field name
 typeMismatch.person.amount - type mismatch for specific form object and field
 typeMismatch.com.example.SerialNumber  - type mismatch for specific target type
 ```
-- Additional error message types
-    - required - required fields can be set in @InitBinder method binder.setRequiredFields( "firstName", "lastName" )
-    - methodInvocation - if getter or setter on form fails
+Additional error message types
+- required - required fields can be set in @InitBinder method binder.setRequiredFields( "firstName", "lastName" )
+- methodInvocation - if getter or setter on form fails
 
 ###Validation
 
