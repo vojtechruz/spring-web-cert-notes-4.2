@@ -873,3 +873,134 @@ public void addFormatters(FormatterRegistry registry) {
 
 
 ----------------
+
+#Exceptions
+###Exception Handling
+@ResponseStatus on an exception class will result in given HTTP status code being return when annotated exception is thrown
+```java
+@ResponseStatus(HttpStatus.NOT_FOUND)
+public class PersonNotFoundException { … }
+```
+
+If exception in third party library or additional logic needs to be performed, approach above cannot be used
+- Need to have method annotated @ExceptionHandler(ExceptionClass.class) in @Controller
+- Can combine with @ResponseStatus
+```java
+@ResponseStatus(HttpStatus.NOT_FOUND)
+@ExceptionHandler({PersonNotFoundException.class})
+public void handlePersonNotFound() {
+  ...
+}
+```
+- Cannot declare Model as method parameter, but most others can be - HttpServletRequest, HttpServletResponse,...
+- Can return error view or content directly or status code with empty body
+- Exception caught can be injected into method, only exceptions of type declared in method type are passed to method
+
+```java
+@ExceptionHandler
+public String handleException(IOException e) {…}
+```
+
+- Can define multiple exceptions @ExceptionHandler({FooException.class, BarException.class})
+- Additional way to map URL to static codes directly
+
+**XML Config**  
+```xml
+<mvc:status-controller path="/notfound" status-code="404" />
+```
+
+**Java Config**  
+```java
+class Config extends WebMvcConfigurerAdapter {
+  @Override
+  public void addViewControllers(ViewControllerRegistry registry) {
+    registry.addStatusController("/notfound", HttpStatus.NOT_FOUND);
+  }
+}
+```
+
+###Controller Advice
+
+- @ControllerAdvice - Annotation on class level, which now acts like an Interceptor
+- Applies to any request on any @Controller, can be narrowed down to specific controllers using
+    - `@ControllerAdvice(assignableTypes={FooController.class, BarController.class})` - Only for specific controllers
+    - `@ControllerAdvice(annotations={RestController.class})` - Only for specific annotations
+    - `@ControllerAdvice(basePackages={"com.example"})` - Only for specific packages
+- @ModelAttribute in @ControllerAdvice - Add data to model for any request
+- @InitBinder in @ControllerAdvice - Set up binding for any request
+- @ExceptionHandler - Global exception handling for any request
+- To enable a specific class annotated by @ControllerAdvice, it is just enough for it to be a Spring managed bean - either `<bean>` in xml, @Bean in java config or discovered by component scan
+- @ControllerAdvice can implement `ResponseBodyAdvice<>`
+    - Has method supports() and beforeBodyWrite()
+    - AbstractJsonpResponseBodyAdvice - subclass to write JSONP as a response
+
+###HandlerExceptionResolver
+
+- Interface to be implemented by classes resolving exceptions from handlers (@Controller is a type of handler)
+- Can be chained, is ordered, if returns null chain continues
+- Prepares model and view to be rendered on error
+- By default enabled resolvers - DefaultHandlerExceptionResolver, ResponseStatusExceptionResolver
+```java
+public interface HandlerExceptionResolver {
+  ModelAndView resolveException(HttpServletRequest req, HttpServletResponse resp Object handler, Exception e);
+}
+```
+
+###DefaultHandlerExceptionResolver
+
+- Converts the most common Spring exceptions to HTTP Status codes
+    - NoSuchRequestHandlingMethodException → 404
+    - HttpRequestMethodNotSupportedException → 405
+    - ...
+- ResponseStatusExceptionResolver → supports @ResponseStatus on Exception classes
+- ExceptionHandlerExceptionResolver → supports @ExceptionHandler on @Controller and @ControllerAdvice methods
+
+###SimpleMappingExceptionResolver
+
+- HandlerExceptionResolver implementation
+- maps exception class names to view names
+- Adds exception object to model as an attribute  'exception'
+- Can define default error view and default HTTP status code
+- Can be extended, easier than custom implementation of HandlerExceptionResolver
+- Does not log exceptions by default, can be enabled in children by overriding methods from AbstractHandlerExceptionResolver  
+
+**XML Configuration**  
+```xml
+<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+  <property name="defaultErrorView" value="error" />
+  <property name="exceptionMappings">
+    <map>
+      <entry key="IllegalArgumentException" value="illegalArgument" />
+    </map>
+  </property>
+  <property name="defaultStatusCode" value="500"/>
+</bean>
+```
+
+**Java Configuration**  
+```java
+@Bean
+public SimpleMappingExceptionResolver simpleMappingExceptionResolver() {
+  SimpleMappingExceptionResolver resolver = new SimpleMappingExceptionResolver();
+  resolver.setDefaultErrorView("error");
+  resolver.setDefaultStatusCode(500);
+  Properties exceptionMappings = new Properties();
+  exceptionMappigs.put("IllegalArgumentException", "illegalArgument");
+  resolver.setExceptionMappings(exceptionMappigs);
+
+  return resolver;
+}
+```
+
+###ResponseEntityExceptionHandler
+
+- Alternative to DefaultHandlerExceptionResolver suitable for REST
+- Similar in functionality, but instead of ModelAndView returns ResponseEntity (more suitable for REST as instead of error view, content should be returned directly)
+- Extend to customize
+
+###Spring Boot Exception Handling
+
+- Any unhanded exceptions are watched and redirected to internal controller, which returns /error view
+- Can define custom error page
+- Whitelabel Error Page is spring’s default
+- Can be disabled using `error.whitelabel.enabled=false`
