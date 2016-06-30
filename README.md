@@ -1147,10 +1147,10 @@ function performAjaxCall() {
 - Useful e.g. for calling remote REST api on different domain
 
 **CORS Flow**  
-1. A cross-domain ajax request from javascript is initiated from my-site.com to other-site.com
-2. Browsers sends OPTIONS http request to other-site.com with header Origin: my-site.com
-3. other-site.com responds with http header Access-Control-Allow-Origin with lists of allowed sites (or * wildcard for all) or may refuse to serve response to provided origin
-4. Browser will not allow the request when server does not provide Access-Control-Allow-Origin header or if the sites mentioned do not match the origin
+1. A cross-domain ajax request from javascript is initiated from my-site.com to other-site.com  
+2. Browsers sends OPTIONS http request to other-site.com with header Origin: my-site.com  
+3. other-site.com responds with http header Access-Control-Allow-Origin with lists of allowed sites (or * wildcard for all) or may refuse to serve response to provided origin  
+4. Browser will not allow the request when server does not provide Access-Control-Allow-Origin header or if the sites mentioned do not match the origin  
 
 **@CrossOrigin**  
 - enables CORS for a controller
