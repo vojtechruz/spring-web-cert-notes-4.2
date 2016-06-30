@@ -1291,7 +1291,7 @@ In xml enable pre/post authorize annotations
 ```
 On method level use
 ```java
-@PreAuthorize("hasRole(‘ROLE_ADMIN')")
+@PreAuthorize("hasRole('ROLE_ADMIN')")
 ```
 
 
@@ -1355,8 +1355,8 @@ public class Application extends SpringBootServletInitializer {
 
 ###Application Configuration
 
-Application configuration is externalised by default to application.properties file
-- Located in workingdirectory/config or working directory or classpath/config or class path
+- Application configuration is externalised by default to application.properties file
+- Located in workingdirectory/config or working directory or classpath/config or classpath
 - PropertySource automatically created
 - Some config options
 ```
