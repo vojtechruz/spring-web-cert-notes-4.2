@@ -1183,3 +1183,111 @@ public class WebConfig extends WebMvcConfigurerAdapter {
   }
 }
 ```
+
+----------------
+
+#Spring Security
+
+- Independent on container - does not require EE container, configured in application and not in container
+- Separated security from business logic
+- Decoupled authorisation from authentication
+- Principal - User, device, or system that is performing and action
+- Authentication
+    - Process of checking identity of a principal (credentials are valid)
+    - basic, digest, form, X.509, ...
+    - Credentials need to be stored securely
+- Authorization
+    - Process of checking a principal has privileges to perform requested action
+    - Depends on authentication
+    - Often based on roles - privileges not assigned to specific users, but to groups
+- Secured item - Resource being secured
+
+###Security Configuration
+
+Declare spring security filter chain as a servlet filter
+
+```xml
+<filter>
+  <filter-name>springSecurityFilterChain</filter-name>
+  <filter-class> org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+</filter>
+
+<filter-mapping>
+  <filter-name>springSecurityFilterChain</filter-name>
+  <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+Intercepted URLs declared in xml config with security namespace tags
+
+```xml
+<security:http>
+   …security config here…
+</security:http>
+```
+
+- `<security:intercept-url pattern="/admin/**" access="ROLE_ADMIN" />`
+-  These tags resolved from top to bottom
+-  Specific rules should be above generic rules, otherwise specific would be never triggered
+-  In "access" attribute can either specify role directly or SPEL expression.
+    - If expression is used, must be enabled using `<security:http use-expressions="true">`
+    - Cannot mix plain roles and expressions.
+    - `hasRole()` - has specific role
+    - `hasAnyRole()` - multiple roles with OR
+    - `hasRole(FOO)` AND hasRole(BAR) - having multiple roles
+    - `isAnonymous()` - unauthenticated
+    - `isAuthenticated()`
+- Can specify login form using `<security:form-login login-page="/login" default-target-url="/authenticated/home"/>`
+- Can specify logout `<security:logout logout-success-url="/home.html"/>`, if not declared, logout is not possible
+
+###JSP Security Custom Tags
+
+- `<security:authentication property="principal.username"/>` - Access current Authentication object and its properties - this outputs current principal’s username
+- `<security:authorize>` Display content of the tag only when...
+    - `<sec:authorize access="hasRole('supervisor')">` - grant access when SPEL expression is true
+    - `<sec:authorize url="/admin">` - grant access when also has access to url specified (e.g. display link only when user can actually click it)
+
+###Method Security
+
+- Methods (e.g. service layer) can be secured using AOP
+- JSR-250 or Spring annotations or xml config from security namespace or pre/post authorise
+- Define secured methods in xml
+```xml
+<security:global-method-security>
+  <security:protect-pointcut expression="execution(* example..*Service.*(..))" access="ROLE_ADMIN,ROLE_USER"/>
+</security:global-method-security>
+```
+
+**Use JSR-250**
+In xml config
+```xml
+<security:global-method-security jsr250-annotations="enabled" />
+```
+On method level
+```java
+@RolesAllowed("ROLE_ADMIN")
+```
+
+**Spring @Secured Annotations**
+In xml enable security annotations
+```xml
+<security:global-method-security secured-annotations="enabled" />
+```
+
+On method level - roles only, no SPEL
+```java
+@Secured("IS_AUTHENTICATED_FULLY") or @Secured("ROLE_ADMIN") or @Secured({"ROLE_ADMIN", "ROLE_USER"})
+```
+    
+**Pre/Post authorize**  
+- Pre authorize - can use SPEL (@Secured cannot), checked before annotated method invocation
+- Post authorize - can use SPEL, checked after annotated method invocation, can access return object of the method using returnObject variable in SPEL; If expression resolves to false, return value is not returned to caller
+
+In xml
+```xml
+<security:global-method-security pre-post-annotations="enabled" />
+```
+On method level
+```java
+@PreAuthorize("hasRole(‘ROLE_ADMIN')")
+```
