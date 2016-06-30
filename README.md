@@ -1258,7 +1258,7 @@ Intercepted URLs declared in xml config with security namespace tags
 </security:global-method-security>
 ```
 
-**Use JSR-250**
+**Use JSR-250**  
 In xml config
 ```xml
 <security:global-method-security jsr250-annotations="enabled" />
@@ -1268,13 +1268,13 @@ On method level
 @RolesAllowed("ROLE_ADMIN")
 ```
 
-**Spring @Secured Annotations**
-In xml enable security annotations
+**Spring @Secured Annotations**  
+In xml enable @Secured annotations
 ```xml
 <security:global-method-security secured-annotations="enabled" />
 ```
 
-On method level - roles only, no SPEL
+On method level use (roles only, no SPEL)
 ```java
 @Secured("IS_AUTHENTICATED_FULLY") or @Secured("ROLE_ADMIN") or @Secured({"ROLE_ADMIN", "ROLE_USER"})
 ```
@@ -1283,11 +1283,11 @@ On method level - roles only, no SPEL
 - Pre authorize - can use SPEL (@Secured cannot), checked before annotated method invocation
 - Post authorize - can use SPEL, checked after annotated method invocation, can access return object of the method using returnObject variable in SPEL; If expression resolves to false, return value is not returned to caller
 
-In xml
+In xml enable pre/post authorize annotations
 ```xml
 <security:global-method-security pre-post-annotations="enabled" />
 ```
-On method level
+On method level use
 ```java
 @PreAuthorize("hasRole(‘ROLE_ADMIN')")
 ```
