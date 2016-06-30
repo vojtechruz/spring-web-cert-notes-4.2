@@ -1294,10 +1294,12 @@ On method level use
 @PreAuthorize("hasRole(‘ROLE_ADMIN')")
 ```
 
+
 ----------------
 
-#Spring Boot
 
+#Spring Boot
+###Basics
 - Convention over configuration - pre-configures Spring app by reasonable defaults, which can be overridden
 - Maven and gradle integration
 - MVC enabled by having spring-boot-starter-web as a dependence
@@ -1308,15 +1310,17 @@ On method level use
     - Registers BeanNameViewResolver if beans implementing View interface are found
     - Registers ContentNegociatingViewResolver, InternalResourceViewResolver (prefix and suffix configurable in application.properties)
     - Customisation of auto-configured beans should be done using WebMvcConfigurerAdapter as usual
+
+###@SpringBootApplication
 - Main Class annotated with @SpringBootApplication, can be run as a jar with embedded application server (Tomcat by default, can be changed for example to Jetty or Undertow)
-    - Actually consists of three annotations @Configuration, @EnableAutoConfiguration and @ComponentScan
-    - @EnableAutoConfiguration configures modules based on presence of certain classes on class path - based on @Conditional
-    - Manually declared beans usually override beans automatically created by AutoConfiguration (@ConditionalOnMissingBean is used), usually bean type and not name matters
-    - Can selectively exclude some AutoConfigutation classes @EnableAutoConfiguration(exclude=DataSourceAutoConfiguration.class)
+- Actually consists of three annotations @Configuration, @EnableAutoConfiguration and @ComponentScan
+- @EnableAutoConfiguration configures modules based on presence of certain classes on class path - based on @Conditional
+- Manually declared beans usually override beans automatically created by AutoConfiguration (@ConditionalOnMissingBean is used), usually bean type and not name matters
+- Can selectively exclude some AutoConfigutation classes `@EnableAutoConfiguration(exclude=DataSourceAutoConfiguration.class)`
 
 ```java
 @SpringBootApplication
-public class Application {
+public class Application extends SpringBootServletInitializer {
   //run in embedded container
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
@@ -1329,12 +1333,13 @@ public class Application {
   }
 }
 ```
-
+###Dependencies
 - Need to add proper maven parent and dependencies
-- Using "starter" module dependencies -> as transitive dependencies bundles versions which are tested to work well together
+- Using "starter" module dependencies → as transitive dependencies bundles versions which are tested to work well together
 - spring-boot-starter, spring-boot-starter-web, spring-boot-starter-test, ...
 - Parent pom defines all the dependencies using dependency management, specific versions are not defined in our pom.xml
 - Only version which needs to be specifically declared is parent pom version
+
 ```xml
 <dependency>
   <groupId>org.springframework.boot</groupId>
@@ -1347,6 +1352,8 @@ public class Application {
   <version>1.3.0.RELEASE</version>
 </parent>
 ```
+
+###Application Configuration
 
 Application configuration is externalised by default to application.properties file
 - Located in workingdirectory/config or working directory or classpath/config or class path
