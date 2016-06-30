@@ -901,7 +901,7 @@ public void handlePersonNotFound() {
 public String handleException(IOException e) {…}
 ```
 
-- Can define multiple exceptions @ExceptionHandler({FooException.class, BarException.class})
+- Can define multiple exceptions `@ExceptionHandler({FooException.class, BarException.class})`
 - Additional way to map URL to static codes directly
 
 **XML Config**  
@@ -1004,3 +1004,83 @@ public SimpleMappingExceptionResolver simpleMappingExceptionResolver() {
 - Can define custom error page
 - Whitelabel Error Page is spring’s default
 - Can be disabled using `error.whitelabel.enabled=false`
+
+
+----------------
+
+
+#REST
+
+- Representational State Transfer
+- Architectural style
+- Stateless (clients maintains state, not server), scalable; → do not use HTTP session
+- Usually over http, but not necessarily
+- Entities (e.g. Person) are resources represented by URIs
+- HTTP methods (GET, POST, PUL, DELETE) are actions performed on resource (like CRUD)
+- Resource can have multiple representations (different content type)
+- Request specifies desired representation using HTTP Accept header, extension in url (.json) or parameter in url (format=json)
+- Response states delivered representation type using Content-Type HTTP header
+
+###HATEOAS
+
+- Hypermedia As The Engine of Application State
+- Response contains links to other items and actions → can change behavior without changing client
+- Decoupling of client and server
+
+###RestTemplate
+
+- Can be used to simplify HTTP calls to RESTful api
+- Message converters supported - Jackson, GSON
+- Automatic input/output conversion - using HttpMessageConverters
+    - StringHttpMessageConvertor
+    - MarshallingHttpMessageConvertor
+    - MappingJackson2XmlHttpMessageConverter
+    - GsonHttpMessageConverter
+    - RssChannelHttpMessageConverter
+- AsyncRestTemplate - similar to regular one, allows asynchronous calls, returns ListenableFuture
+
+###JAX-RS
+
+- Java API for RESTful web services
+- Part of Java EE6
+- Jersey is reference implementation  
+
+```java
+@Path("/persons/{id}")
+public class PersonService {
+  @GET
+  public Person getPerson(@PathParam("id") String id) {
+    return findPerson(id);
+  }
+}
+```
+
+###Spring Rest Support
+
+- @ResponseStatus (HttpStatus.OK) can set HTTP response status code
+    - If used, void return type means no View (empty response body) and not default view!
+    - 2** - sucess (201 Created, 204 No Content,...)
+    - 3** - redirect
+    - 4** - client error (404 Not found, 405 Method Not Allowed, 409 Conflict,...)
+    - 5** - server error
+- @ResponseBody before controller method return type means that the response should be directly rendered to client and not evaluated as a logical view name
+    -  Uses converters to convert return type of controller method to requested content type
+- @RequestHeader can inject value from HTTP request header as a method parameter
+- @RequestBody - Injects body of HTTP request, uses converters to convert request data based on content type
+    - public void updatePerson(@RequestBody Person person, @PathVariable("id") int personId)
+    - Person can be converted from JSON, XML, ...
+- HttpEntity<>
+    - Controller can return HttpEntity instead of view name - and directly set response body, HTTP response headers
+    - `return new HttpEntity<ReturnType>(responseBody, responseHeaders);`
+- HttpMessageConverter
+    - Converts HTTP response (annotated by @ResponseBody) and request body data (annotated by @RequestBody)
+    - `@EnableWebMvc` or `<mvc:annotation-driven/>` enables it
+    - XML, Forms, RSS, JSON,...
+- @RequestMapping can have attributes produces and consumes to specify input and output content type
+    - `@RequestMapping (value= "/person/{id}", method=RequestMethod. GET, produces = {"application/json"})`
+    - `@RequestMapping (value= "/person/{id}", method=RequestMethod. POST, consumes = { "application/json" })`
+- Content Type Negotiation can be used both for views and REST endpoints
+- @RestController - Equivalent to @Controller, where each method is annotated by @ResponseBody
+- By default, html forms support only POST and GET as methods
+    - spring's JSP taglib `<form:form>` supports all (by including hidden field for methods used)
+    - `<form:form method= "put" ...>`
