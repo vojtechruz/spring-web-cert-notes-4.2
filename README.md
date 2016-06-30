@@ -1384,3 +1384,118 @@ public void customize(ConfigurableEmbeddedServletContainer container) {
 }
 ```
 Or if needed more fine-grained configuration - declare bean of type EmbeddedServletContainerFactory
+
+----------------
+
+#WebSocket
+###WebSocket Protocol
+- URL scheme ws:// or wss:// for secured connection
+- Full duplex communication over persistent TCP connection
+- Small overhead once the connection is established
+- Handshake over HTTP, then upgrade to WebSocket protocol 
+```
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+```
+
+Browsers provide client-side [WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications)
+
+```javascript
+var socket = new WebSocket("ws://www.example.com/socketserver");
+
+exampleSocket.onopen = function() {
+  socket.send("Here's some text that the server is urgently awaiting!"); 
+};
+```
+
+###WebSocket in Java & Spring
+- JSR-356 - Java API for WebSocket
+    - Part of Java EE7
+    - Tyrus is reference implementation
+    - Implemented by application servers
+- spring-websocket
+    - Spring Built on JSR-356
+    - Fallback option - SockJS
+    - STOMP supported as sub-protocol
+- enabled by @EnableWebSocket
+    
+###SockJS
+- Fallback option when [browser does not support WebSockets](http://caniuse.com/#feat=websockets)
+- API similiar to WebSocket API
+```javascript
+var sock = new SockJS("ws://www.example.com/socketserver");
+sock.onopen = function() { 
+  sock.send("Here's some text that the server is urgently awaiting!");
+};
+```
+- Spring provides SockJS Java client (needed for server to server WebSocket communication, tests, ...)
+
+###Spring WebSocket Handlers
+- Way to implement simple binary or text WebSocket handling
+- TextWebSocketHandler / BinaryWebSocketHandler
+- Does not have any application protocol, app needs to interpret all the messages
+- Handler needs to be registered as a Spring managed bean
+```java
+public class FooHandler extends TextWebSocketHandler {
+  @Override
+  public void handleTextMessage(WebSocketSession session, TextMessage msg) throws Exception {
+    session.sendMessage(msg); 
+  }
+}
+```
+
+Needs to be enabled by @EnableWebSocket and handlers to be registered in @Configuration class implementing WebSocketConfigurer.registerWebSocketHandlers()
+
+```java
+@Configuration
+@EnableWebSocket
+public class WSConfig implements WebSocketConfigurer {
+  @Override
+  public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) { 
+    registry.addHandler(fooHandler(), "/foo");
+  }
+}
+```
+
+###STOMP
+- WS is not application protocol, but transport protocol
+- Can use plain WS or with sub-protocol
+- Spring supports STOMP
+- Simple (or Streaming) Text Orientated Messaging Protocol
+- protocol for async communication using frames
+- JS client - stomp.js, compatible with both regular WS API or SockJS
+
+```javascript
+var socket = new WebSocket("ws://www.example.com/socketserver"); 
+var stomp = Stomp.over(socket);
+stomp.connect(...);
+```
+
+- Spring provides STOMP Java client WebSocketStompClient for server to server communication and tests
+- STOMP is message driven, similar to JMS
+- Messages can be routed to destinations - application, message broker, user
+
+###Application Destinations
+
+###Message Broker Destinations
+
+###User Destinations
+
+### WS Security
+- endpoint can be secured as regular URL would (http is used to do the handshake)
+- wss:// for secure connection instead of ws:// (like http and https)
+- Spring 4+ supports method level security for WS
+    - spring-security-messaging module
+    - SecurityContextChannelInterceptor - sets SecurityContext
+    - ChannelSecurityInterceptor - delegates to AccessDecisionManager
+    
+```java
+ @Configuration
+public class WSConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
+  @Override
+  protected void configureInbound (MessageSecurityMetadataSourceRegistry registry) {
+    registry.simpSubscribeDestMatchers("/topic/foo").hasRole("ADMIN") //This only to admin
+    .anyMessage().authenticated(); // All others for authenticated users
+  } 
+}
+```
