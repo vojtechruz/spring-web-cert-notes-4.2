@@ -1476,8 +1476,27 @@ stomp.connect(...);
 - Messages can be routed to destinations - application, message broker, user
 
 ###Application Destinations
+- SimpAnnotationMethodMessageHandler processes app destinations
+- Delegates to message handler methods in @Controllers
+- Supports the following argument - @Payload, @Header, @Headers, MessageHeaders, HeaderAccessor, @DestinationVariable, Principal
+- return values sent to brokerChannel 
+- Message converters used to convert input and output
+- Response destination can be specified using @SendTo and @SendToUser
+- @MessageExceptionHandler to process exceptions
+
+```java
+@Controller
+public class PersonController {
+  @MessageMapping("/createPerson")
+  public void foo(@Payload Person person) {
+    ... 
+  }
+}
+```
 
 ###Message Broker Destinations
+- Two brokers available - Simple Broker, Stomp Broker
+
 
 ###User Destinations
 
@@ -1498,4 +1517,4 @@ public class WSConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
     .anyMessage().authenticated(); // All others for authenticated users
   } 
 }
-```
+``` 
