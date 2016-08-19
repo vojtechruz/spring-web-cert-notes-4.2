@@ -1497,8 +1497,39 @@ public class PersonController {
 ###Message Broker Destinations
 - Two brokers available - Simple Broker, Stomp Broker
 
+**SimpleBroker**
+- Everything is stored in memory
+- Supports only subset of STOMP features (e.g. no acks, receipts, etc.)
+
+```java
+@Configuration
+public class WSConfig extends AbstractWebSocketMessageBrokerConfigurer {
+  @Override
+  public void configureMessageBroker(MessageBrokerRegistry registry) { 
+    registry.enableSimpleBroker("/queue/", "/topic/"); 
+    registry.setApplicationDestinationPrefixes("/app");
+  }
+}
+```
+
+**StompBroker**
+- Full featured broker
+```java
+@Configuration
+public class WSConfig extends AbstractWebSocketMessageBrokerConfigurer {
+  @Override
+  public void configureMessageBroker(MessageBrokerRegistry registry) { 
+    registry.enableStompBrokerRelay("/topic", "/queue");
+    registry.setApplicationDestinationPrefixes("/app");
+  }
+}
+```
+
 
 ###User Destinations
+- An application can send messages targeting a specific user
+- Client subscribes to /user/queue/queue-name
+- Destination is handled by the UserDestinationMessageHandler and transformed into a destination unique to the user session - /user/queue/position-updates-user123
 
 ### WS Security
 - endpoint can be secured as regular URL would (http is used to do the handshake)
@@ -1507,9 +1538,10 @@ public class PersonController {
     - spring-security-messaging module
     - SecurityContextChannelInterceptor - sets SecurityContext
     - ChannelSecurityInterceptor - delegates to AccessDecisionManager
+    - Sender sends to UserDestinationMessageHandler /user/{username}/queue/queue-name, which is then translated by UserDestinationMessageHandler to one ore more destinations, depending on the number of sessions associated with the user
     
 ```java
- @Configuration
+@Configuration
 public class WSConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
   @Override
   protected void configureInbound (MessageSecurityMetadataSourceRegistry registry) {
