@@ -1525,11 +1525,36 @@ public class WSConfig extends AbstractWebSocketMessageBrokerConfigurer {
 }
 ```
 
-
 ###User Destinations
 - An application can send messages targeting a specific user
 - Client subscribes to /user/queue/queue-name
 - Destination is handled by the UserDestinationMessageHandler and transformed into a destination unique to the user session - /user/queue/position-updates-user123
+
+
+###SimpMessagingTemplate
+- Similar to JdbcTemplate or RestTemplate
+- Can be used to send messages to destinations and users
+- Inject SimpMessagingTemplate configured in java config or xml
+
+```java
+@Controller
+public class GreetingController {
+
+  @Autowired
+  private SimpMessagingTemplate template;
+   
+  @RequestMapping(path="/greet", method=POST)
+  public void greet(String greeting) {
+    this.template.convertAndSend("/topic/greetings", greeting);
+  }
+  
+  @RequestMapping(path="/greetUser", method=POST)
+  public void greet(String greeting, String username) {
+    this.template.convertAndSendToUser(username, "/queue/greetings", greeting);
+  }
+
+}
+```
 
 ### WS Security
 - endpoint can be secured as regular URL would (http is used to do the handshake)
