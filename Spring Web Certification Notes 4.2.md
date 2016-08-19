@@ -1575,3 +1575,129 @@ public class WSConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
   } 
 }
 ``` 
+
+#Testing Spring Applications
+
+###Test Types
+
+**Unit Tests**
+- Isolated tests for single unit of functionality, method level
+- Dependencies interactions are not tested - replaced by either mocks or stubs
+- Controllers; Services; ...
+
+**Integration Tests**
+- Tests interactions between components
+- Dependencies are not mocked/stubbed
+- Controllers + Services + DAO + DB
+
+**End-to-end Tests**
+- Fully integrated system
+- From user's perspective through user interface
+- JWebUnit/HTMLUnit with embedded Jetty server, Selenium
+
+**Performance tests**
+- JMeter, Grinder
+
+###Spring MVC Test Framework
+- Unit testing @Controllers is not enough, need to test, all the spring managed MVC features as
+    - @RequestMapping resulting in correct urls
+    - @Valid validations
+    - redirects
+    - correct View resolving
+    - ...
+- Originally separate project, [part of the Spring Framework](http://docs.spring.io/spring/docs/current/spring-framework-reference/htmlsingle/#spring-mvc-test-framework) since 3.2
+- spring-test module
+- Web container is not required to run tests
+- Fluent API
+- Requests are processed through Dispatcher Servlet
+
+```java
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@RunWith(SpringRunner.class)
+@WebAppConfiguration
+@ContextConfiguration("test-servlet-context.xml")
+public class ExampleTests {
+
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
+    }
+
+    @Test
+    public void getAccount() throws Exception {
+        this.mockMvc.perform(get("/accounts/1").accept(MediaType.parseMediaType("application/json;charset=UTF-8")))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType("application/json"))
+            .andExpect(jsonPath("$.name").value("Lee"));
+    }
+
+}
+```
+1. Perform HTTP request methods (GET, POST, ...) 
+    - mockMvc.perform(get("/accounts/1")...)
+    - Returns instance of MockHttpServletRequestBuilder
+2. Add additional params/headers/... to the request on returned MockHttpServletRequestBuilder instance using fluent api
+    - get(...).accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
+    - param, requestAttr, locale, header, contentType, accept
+3. Assert expected results
+    - mockMvc.perform() returns MockMvcResultMatcher instance
+    - mockMvc.perform(...).andExpect(...).andExpect(...).andExpect(...)
+    - Uses Hamcrest
+    - Assertions for: content, model, header, view, forwarderUrl
+    
+
+**Testing Validations and Binding errors**
+- .andExpect(model().attributeHasErrors("account"))
+- .andExpect(model().attributeErrorCount("account", 1)) .andExpect(model().attributeErrorCount("account", 1))
+- .andExpect(model().attributeHasFieldErrors("account", "email")) .andExpect(model().attributeHasFieldErrors("account", "email"))
+- .andDo(print()) - print debug information to the console
+
+**Testing REST Controllers**
+- Need to define correct content type using `.accept(MediaType.APPLICATION_JSON))`, correct response contentType can be checked using `.andExpect(content().contentType("application/json"))`
+- Specific JSON field of response JSON can be checked using `.andExpect(jsonPath("$.fieldName").value("expectedValue"))`
+    - Uses [JsonPath](https://github.com/jayway/JsonPath) (query language for JSON, similar to XPath for xml) queries
+    
+**Testing Security**
+- Need to inject FilterChainProxy
+- And then add it to mckMvc config  - `MockMvcBuilders.webAppContextSetup(this.wac).addFilter(filterChainProxy).build();`
+- Can define roles for current user - `@WithMockUser(username="admin",roles={"USER","ADMIN"})`
+
+```java
+@RunWith(SpringRunner.class)
+@WebAppConfiguration
+@ContextConfiguration("test-servlet-context.xml")
+public class ExampleTests {
+    
+    @Autowired
+    private WebApplicationContext wac;
+    
+    @Autowired 
+    private FilterChainProxy filterChainProxy;
+    
+    private MockMvc mockMvc;
+    
+    @Before
+    public void setup() {
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).addFilter(filterChainProxy).build();
+    }
+    
+    @Test 
+    public void requiresAuthentication() throws Exception {
+        mockMvc.perform(get("/")).andExpect(redirectedUrl("http://localhost/login"));
+    }
+    
+    @Test
+    @WithMockUser(username="admin",roles={"USER","ADMIN"})
+    public void requiresAuthentication() throws Exception {
+        mockMvc.perform(get("/")).andExpect(status().isOk());
+    }
+    
+}
+```
