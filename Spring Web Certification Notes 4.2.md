@@ -1703,5 +1703,5 @@ public class ExampleTests {
 ```
 
 ###HtmlUnit Integration
-- Spring test also contains []integration with HtmlUnit](http://docs.spring.io/spring/docs/current/spring-framework-reference/htmlsingle/#spring-mvc-test-server-htmlunit)
+- Spring test also contains [integration with HtmlUnit](http://docs.spring.io/spring/docs/current/spring-framework-reference/htmlsingle/#spring-mvc-test-server-htmlunit)
 - Usage same as with regular HtmlUnit, but without the need to deploy the app to a Servlet Container
