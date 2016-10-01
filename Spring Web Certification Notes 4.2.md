@@ -1359,7 +1359,7 @@ public class Application extends SpringBootServletInitializer {
 - Located in workingdirectory/config or working directory or classpath/config or classpath
 - PropertySource automatically created
 - Some config options
-```
+```properties
 logging.level.org.springframework=DEBUG
 logging.level.com.example=INFO
 
