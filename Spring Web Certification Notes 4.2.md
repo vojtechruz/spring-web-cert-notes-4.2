@@ -1,7 +1,7 @@
 #Basic MVC Configuration
 ###Dispatcher Servlet
 - Implementation of Front Controller Pattern (see Patterns of Enterprise Application Architecture)
-- Single point of entry - handle all incomming requests
+- Single point of entry - handle all incoming requests
 - Orchestrates request handling by delegating requests to additional components (@Controllers, Views, View Resolvers, handler mappers, ...)
 - Can map directly to /, but then exception for handling static resources needs to be configured
 
@@ -104,7 +104,7 @@ In configuration file for Web Application Context declare a controller to serve 
 - Customisation - @Configuration class implements WebMvcConfigurer
     - Or for convenience extends WebMvcConfigurerAdapter, which implements given interface with empty methods
     - Methods - addInterceptors, addResourceHandlers (similar to `<mvc:resource>`), configureDefaultServletHandling, addControllers, configureContentNegotiation
-- Not specified by Spring Boot, but similar config is; Should not be specified when using Boot; If specified boot skips mvc autoconfiguration and needs to be done manually
+- Not specified by Spring Boot, but similar config is; Should not be specified when using Boot; If specified boot skips MVC autoconfiguration and needs to be done manually
   
 ----------------
   
@@ -140,13 +140,13 @@ public interface View {
 
 ###Controller
 - POJO annotated @Controller
-- Has methods which corresponds to specific urls, incl. variants for different HTTP methods (GET, POST), parameters provided etc.
+- Has methods which correspond to specific URLs, including variants for different HTTP methods (GET, POST), parameters provided etc.
 - Methods are mapped to URLs usually using annotations @RequestMapping
 - Controller fills Model with data, which is later provided to the View
 - Controller can directly return data using @ResponseBody annotation
 - Or can return a Logical view name as String. That is later resolved to a specific view using ViewResolvers
 - If returns null or return type is void, the view name will be determined from URL requested
-    - remove leading slash and remove extension
+    - remove leading slash and remove the extension
     - using default RequestToViewNameTranslator
 - When specified as method parameters, certain objects can be automatically injected by spring to be used inside the controller methods
     - Model, HttpServletRequest, HttpServletResponse, Locale, Principal, HttpSession, HttpEntity<?>, TimeZone,...
@@ -156,7 +156,7 @@ public interface View {
 
 #Mapping Controllers
 ###Handler Resolving process
-1. Client sends a request to a specific url
+1. Client sends a request to a specific URL
 2. Dispatcher servlet consults handler mappings, specific handler is returned based on the request - `getHandler(request)`
 3. Handler is invoked through HandlerAdapter - `handle(request,response,handler)`  
 
@@ -298,7 +298,7 @@ public void addInterceptors(InterceptorRegistry registry) {
 ###ViewResolver
 - Returns View to handle to output rendering based on Logical View Name (provided by the controller) and locale
 - This way controller is not coupled to specific view technology (returns only logical view name)
-- Default View resolver already configured is InternalResourceViewResolver, which is used to render JSPs (JstlView). Configures prefix and suffix to logical view name which then results to path to specific JSP.
+- Default View resolver already configured is InternalResourceViewResolver, which is used to render JSPs (JstlView). Configures prefix and suffix to logical view name which then results in a path to specific JSP.
 ```xml
 <bean class= "org.springframework.web.servlet.view.InternalResourceViewResolver" >
   <property name= "prefix" value= "/WEB-INF/" />
@@ -307,7 +307,7 @@ public void addInterceptors(InterceptorRegistry registry) {
 ```
 ###View Resolver Chain
 - Beans of ViewResolver are discovered by Type and added to View Resolver Chain
-- When a controller returns a logical view name, Dispatcher Servlet queries ViewResolvers in the chain depending on their Order. When first resolver returns View, chain does not continue
+- When a controller returns a logical view name, Dispatcher Servlet queries ViewResolvers in the chain depending on their Order. When the first resolver returns View, chain does not continue
 - Some resolvers can be only last (JSTL, JSON, XSLT,...), other anywhere in the chain (Tiles, Velocity, Freemarker,...) - they return null if view not resolved → chain continues
 - Order can be set  
 
@@ -344,11 +344,11 @@ public BeanNameViewResolver beanNameViewResolver() {
 - BeanNameViewResolver
     -  Logical view name is interpreted as a bean name (bean which implements View interface)
 - XmlViewResolver
-    - Similar to BeanNameViewResolver, but does not search for every bean, but just in a specific xml file
+    - Similar to BeanNameViewResolver, but does not search for every bean, but just in a specific XML file
 
 ###Content Negotiation
 - One resource can be rendered as different type to the client depending on the request
-- Can be based on http header, file extension or http request parameter
+- Can be based on HTTP header, file extension or HTTP request parameter
 - Can be achieved by having multiple controller methods, one for each content type - not recommended
 - Can be achieved by having one controller method with branching logic depending or request details - not recommended
 
@@ -357,7 +357,7 @@ public BeanNameViewResolver beanNameViewResolver() {
 - Preferred way is to have a special view resolver to do the content negotiation logic - ContentNegotiatingViewResolver
 - CNVR delegates to other view resolvers
     - View interface has getContentType() method, which returns content type the view produces (JstlView has text/html)
-    - After delegated resolver returns view, CNVR checks whether its content type (by calling getContentType()) is what was requested by the client
+    - After delegated resolver returns a view, CNVR checks whether its content type (by calling getContentType()) is what was requested by the client
     - If so, the view is returned to the dispatcher servlet, otherwise next view resolver is called by the CNVR
 - CNVR must be the first
 - CNVR can have following properties configured
@@ -387,7 +387,7 @@ public BeanNameViewResolver beanNameViewResolver() {
 - Used to be part of Struts 1
 - Implementation of Composite View Pattern (see Patterns of Enterprise Application Architecture)
 - Tiles 1 not Supported, Tiles 2 since Spring 2.5, Tiles 3 since Spring 3.2
-- Tiles definition in xml file - tiles.xml
+- Tiles definition in XML file - tiles.xml
 - Each definition represents a view
 ```xml
 <tiles-definitions>
@@ -470,17 +470,17 @@ public TilesViewResolver tilesViewResolver() {
 
 - Static resources (JS, CSS,…) caching with long periods (like a year)
 - When resource changes, cache needs to be invalidated (busted)
-- Each resource url has added "fingerprint" - String like version number or hash of contents of the file
-- When resource changes, the fingerprint changes as well → url changes and browser considers it a new resource
+- Each resource URL has added "fingerprint" - String like version number or hash of contents of the file
+- When resource changes, the fingerprint changes as well → URL changes and browser considers it a new resource
 
 
 ###Resource Resolvers
 
 - Spring can define chained Resource Handlers, which from given path resolve specific resource
 - If a resolver does not resolve, the next one in the chain gets the chance
-- Handler can have attacher Resource Resolver, which find the actual resource and can also alter resource URL
+- Handler can have attached Resource Resolver, which finds the actual resource and can also alter resource URL
 - Handler can also have ResourceTransformer, which can alter contents of the resource
-- Resolver can point to compressed version of resource, add fingerprint to the url,...
+- The resolver can point to a compressed version of a resource, add a fingerprint to the URL,...
 - GzipResourceResolver can be used to server compressed versions of resources
 - To enable resource versions in URL
     - ResourceUrlProviderExposingInterceptor filter must be declared as a servlet filter in web.xml
@@ -566,7 +566,7 @@ MessageSource messageSource() {
 1. Form page fetched through HTTP GET
 2. Form is submitted through HTTP POST
 3. Server-Side form validation, save data in form object
-4. Successful Submit results in POST-Redirect-GET to avoid re-POST (Search forms do not follow this - submitted with GET instead of post, no P-R-G as repost is not an issue)
+4. Successful Submit results in POST-Redirect-GET to avoid re-POST (Search forms do not follow this - submitted with GET instead of POST, no P-R-G as re-post is not an issue)
 
 ###Redirects
 
@@ -602,7 +602,7 @@ public String editPerson(@ModelAttribute("personAttribute") Person person, Redir
 - Better - dedicated form object
     - Specific to presentation layer
     - Just what specific form needs, nothing extra
-    - Not always is form direct representation of domain object
+    - Form is not always a direct representation of domain object
     - Contains formatting and validation, type conversion to domain object
 
 ###Managing form object
@@ -743,7 +743,7 @@ public class PersonController {
 
 In the GET method,fetching of view containing form is handled
 - Controller can provide model data, which will be pre-filled in the form once it is rendered
-- "person" attribute name added to model matches modelAttribute="person" in jsp form
+- "person" attribute name added to model matches modelAttribute="person" in JSP form
 ```java
 @RequestMapping(method = RequestMethod.GET)
 public String getPerson(Model model) {
@@ -892,7 +892,7 @@ public void handlePersonNotFound() {
   ...
 }
 ```
-- Cannot declare Model as method parameter, but most others can be - HttpServletRequest, HttpServletResponse,...
+- Cannot declare Model as a method parameter, but most others can be - HttpServletRequest, HttpServletResponse,...
 - Can return error view or content directly or status code with empty body
 - Exception caught can be injected into method, only exceptions of type declared in method type are passed to method
 
@@ -1000,7 +1000,7 @@ public SimpleMappingExceptionResolver simpleMappingExceptionResolver() {
 
 ###Spring Boot Exception Handling
 
-- Any unhanded exceptions are watched and redirected to internal controller, which returns /error view
+- Any unhandled exceptions are watched and redirected to internal controller, which returns /error view
 - Can define custom error page
 - Whitelabel Error Page is spring’s default
 - Can be disabled using `error.whitelabel.enabled=false`
@@ -1014,11 +1014,11 @@ public SimpleMappingExceptionResolver simpleMappingExceptionResolver() {
 - Representational State Transfer
 - Architectural style
 - Stateless (clients maintains state, not server), scalable; → do not use HTTP session
-- Usually over http, but not necessarily
+- Usually over HTTP, but not necessarily
 - Entities (e.g. Person) are resources represented by URIs
 - HTTP methods (GET, POST, PUL, DELETE) are actions performed on resource (like CRUD)
 - Resource can have multiple representations (different content type)
-- Request specifies desired representation using HTTP Accept header, extension in url (.json) or parameter in url (format=json)
+- Request specifies desired representation using HTTP Accept header, extension in URL (.json) or parameter in URL (format=json)
 - Response states delivered representation type using Content-Type HTTP header
 
 ###HATEOAS
@@ -1029,7 +1029,7 @@ public SimpleMappingExceptionResolver simpleMappingExceptionResolver() {
 
 ###RestTemplate
 
-- Can be used to simplify HTTP calls to RESTful api
+- Can be used to simplify HTTP calls to RESTful API
 - Message converters supported - Jackson, GSON
 - Automatic input/output conversion - using HttpMessageConverters
     - StringHttpMessageConvertor
@@ -1059,7 +1059,7 @@ public class PersonService {
 
 - @ResponseStatus can set HTTP response status code
     - If used, void return type means no View (empty response body) and not default view!
-    - 2** - sucess (201 Created, 204 No Content,...)
+    - 2** - success (201 Created, 204 No Content,...)
     - 3** - redirect
     - 4** - client error (404 Not found, 405 Method Not Allowed, 409 Conflict,...)
     - 5** - server error
@@ -1144,12 +1144,12 @@ function performAjaxCall() {
 - Browsers implement Same-Origin policy - ajax call allowed only from same origin - domain and port
 - Measure to prevent Cross Site Scripting attacks
 - CORS = Cross-Origin Resource Sharing, enables cross domain ajax in browsers
-- Useful e.g. for calling remote REST api on different domain
+- Useful e.g. for calling remote REST API on different domain
 
 **CORS Flow**  
 1. A cross-domain ajax request from javascript is initiated from my-site.com to other-site.com  
-2. Browsers sends OPTIONS http request to other-site.com with header Origin: my-site.com  
-3. other-site.com responds with http header Access-Control-Allow-Origin with lists of allowed sites (or * wildcard for all) or may refuse to serve response to provided origin  
+2. Browsers send OPTIONS HTTP request to other-site.com with header Origin: my-site.com  
+3. other-site.com responds with HTTP header Access-Control-Allow-Origin with lists of allowed sites (or * wildcard for all) or may refuse to serve response to provided origin  
 4. Browser will not allow the request when server does not provide Access-Control-Allow-Origin header or if the sites mentioned do not match the origin  
 
 **@CrossOrigin**  
@@ -1190,7 +1190,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
 - Independent on container - does not require EE container, configured in application and not in container
 - Separated security from business logic
-- Decoupled authorisation from authentication
+- Decoupled authorization from authentication
 - Principal - User, device, or system that is performing and action
 - Authentication
     - Process of checking identity of a principal (credentials are valid)
@@ -1218,7 +1218,7 @@ Declare spring security filter chain as a servlet filter
 </filter-mapping>
 ```
 
-Intercepted URLs declared in xml config with security namespace tags
+Intercepted URLs declared in XML config with security namespace tags
 
 ```xml
 <security:http>
@@ -1282,8 +1282,8 @@ On method level use (roles only, no SPEL)
 ```
     
 **Pre/Post authorize**  
-- Pre authorize - can use SPEL (@Secured cannot), checked before annotated method invocation
-- Post authorize - can use SPEL, checked after annotated method invocation, can access return object of the method using returnObject variable in SPEL; If expression resolves to false, return value is not returned to caller
+- Pre-authorize - can use SPEL (@Secured cannot), checked before annotated method invocation
+- Post-authorize - can use SPEL, checked after annotated method invocation, can access return object of the method using returnObject variable in SPEL; If expression resolves to false, return value is not returned to caller
 
 In xml enable pre/post authorize annotations
 ```xml
@@ -1301,7 +1301,7 @@ On method level use
 #Spring Boot
 ###Basics
 - Convention over configuration - pre-configures Spring app by reasonable defaults, which can be overridden
-- Maven and gradle integration
+- Maven and Gradle integration
 - MVC enabled by having spring-boot-starter-web as a dependence
     - Registers Dispatcher servlet
     - Does same as @EnableWebMvc + more
@@ -1314,7 +1314,7 @@ On method level use
 ###@SpringBootApplication
 - Main Class annotated with @SpringBootApplication, can be run as a jar with embedded application server (Tomcat by default, can be changed for example to Jetty or Undertow)
 - Actually consists of three annotations @Configuration, @EnableAutoConfiguration and @ComponentScan
-- @EnableAutoConfiguration configures modules based on presence of certain classes on class path - based on @Conditional
+- @EnableAutoConfiguration configures modules based on presence of certain classes on classpath - based on @Conditional
 - Manually declared beans usually override beans automatically created by AutoConfiguration (@ConditionalOnMissingBean is used), usually bean type and not name matters
 - Can selectively exclude some AutoConfigutation classes `@EnableAutoConfiguration(exclude=DataSourceAutoConfiguration.class)`
 
@@ -1335,10 +1335,10 @@ public class Application extends SpringBootServletInitializer {
 ```
 ###Dependencies
 - Need to add proper maven parent and dependencies
-- Using "starter" module dependencies → as transitive dependencies bundles versions which are tested to work well together
+- Using "starter" module dependencies → using transitive dependencies bundles versions which are tested to work well together
 - spring-boot-starter, spring-boot-starter-web, spring-boot-starter-test, ...
 - Parent pom defines all the dependencies using dependency management, specific versions are not defined in our pom.xml
-- Only version which needs to be specifically declared is parent pom version
+- The only version which needs to be specifically declared is parent pom version
 
 ```xml
 <dependency>
@@ -1355,7 +1355,7 @@ public class Application extends SpringBootServletInitializer {
 
 ###Application Configuration
 
-- Application configuration is externalised by default to application.properties file
+- Application configuration is externalized by default to application.properties file
 - Located in workingdirectory/config or working directory or classpath/config or classpath
 - PropertySource automatically created
 - Some config options
@@ -1392,7 +1392,7 @@ Or if needed more fine-grained configuration - declare bean of type EmbeddedServ
 - URL scheme ws:// or wss:// for secured connection
 - Full duplex communication over persistent TCP connection
 - Small overhead once the connection is established
-- Handshake over HTTP, then upgrade to WebSocket protocol 
+- Handshake over HTTP, then upgrades to WebSocket protocol 
 ```
 HTTP/1.1 101 Switching Protocols
 Upgrade: websocket
@@ -1434,7 +1434,7 @@ sock.onopen = function() {
 - Way to implement simple binary or text WebSocket handling
 - TextWebSocketHandler / BinaryWebSocketHandler
 - Does not have any application protocol, app needs to interpret all the messages
-- Handler needs to be registered as a Spring managed bean
+- Handler needs to be registered as a Spring-managed bean
 ```java
 public class FooHandler extends TextWebSocketHandler {
   @Override
@@ -1534,7 +1534,7 @@ public class WSConfig extends AbstractWebSocketMessageBrokerConfigurer {
 ###SimpMessagingTemplate
 - Similar to JdbcTemplate or RestTemplate
 - Can be used to send messages to destinations and users
-- Inject SimpMessagingTemplate configured in java config or xml
+- Inject SimpMessagingTemplate configured in java config or XML
 
 ```java
 @Controller
@@ -1557,8 +1557,8 @@ public class GreetingController {
 ```
 
 ### WS Security
-- endpoint can be secured as regular URL would (http is used to do the handshake)
-- wss:// for secure connection instead of ws:// (like http and https)
+- An endpoint can be secured as regular URL would (HTTP is used to do the handshake)
+- wss:// for secure connection instead of ws:// (like HTTP and https)
 - Spring 4+ supports method level security for WS
     - spring-security-messaging module
     - SecurityContextChannelInterceptor - sets SecurityContext
@@ -1600,7 +1600,7 @@ public class WSConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
 
 ###Spring MVC Test Framework
 - Unit testing @Controllers is not enough, need to test, all the spring managed MVC features as
-    - @RequestMapping resulting in correct urls
+    - @RequestMapping are resolved to correct URLs
     - @Valid validations
     - redirects
     - correct View resolving
