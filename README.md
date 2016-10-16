@@ -1,5 +1,5 @@
 #Spring Web Certification Notes
-[In Spring Web Certification Notes 4.2.md](https://github.com/vojtechruz/spring-web-cert-notes-4.2/blob/master/Spring%20Web%20Certification%20Notes%204.2.md), there are my notes, which I created as a part of a preparation for the certification. Feel free to edit any inaccuracies,
+[In Spring Web Certification Notes 4.2.md](https://github.com/vojtechruz/spring-web-cert-notes-4.2/blob/master/Spring%20Web%20Certification%20Notes%204.2.md), there are my notes, which I created as a part of my preparation for the certification. Feel free to edit any inaccuracies,
 typos or mistakes and create a pull request for that.
 
 #Spring Web Certification Anki Flashcards
